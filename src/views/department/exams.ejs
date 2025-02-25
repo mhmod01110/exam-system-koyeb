@@ -1,0 +1,121 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><%= department.name %> - Exams</h3>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <% if (department.exams && department.exams.length > 0) { %>
+                <div class="row">
+                    <% department.exams.forEach(exam => { %>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0"><%= exam.title %></h5>
+                                        <span class="badge bg-<%= 
+                                            exam.status === 'PUBLISHED' ? 'success' :
+                                            exam.status === 'DRAFT' ? 'secondary' :
+                                            exam.status === 'IN_PROGRESS' ? 'primary' :
+                                            exam.status === 'COMPLETED' ? 'info' :
+                                            'dark' %>">
+                                            <%= exam.status %>
+                                        </span>
+                                    </div>
+
+                                    <p class="card-text text-muted mb-3">
+                                        <%= exam.description || 'No description provided' %>
+                                    </p>
+
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> Duration: <%= exam.duration %> minutes<br>
+                                            <i class="fas fa-calendar"></i> Start: <%= new Date(exam.startDate).toLocaleString() %><br>
+                                            <i class="fas fa-star"></i> Total Marks: <%= exam.totalMarks %>
+                                        </small>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-info me-1"><%= exam.type %></span>
+                                            <% if (exam.isPublic) { %>
+                                                <span class="badge bg-success">Public</span>
+                                            <% } %>
+                                        </div>
+                                        <div class="btn-group">
+                                            <a href="/exams/<%= exam._id %>" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <% if ((user.role === 'teacher' || user.role === 'admin') && 
+                                                  (exam.createdBy._id.toString() === user._id.toString() || 
+                                                   user.role === 'admin')) { %>
+                                                <a href="/exams/<%= exam._id %>/edit" class="btn btn-sm btn-secondary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger delete-exam"
+                                                        data-exam-id="<%= exam._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No exams available for this department.
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this exam? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Exam Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Handle delete buttons
+    document.querySelectorAll('.delete-exam').forEach(button => {
+        button.addEventListener('click', function() {
+            const examId = this.dataset.examId;
+            deleteForm.action = `/exams/${examId}`;
+            deleteModal.show();
+        });
+    });
+});
+</script> 

@@ -1,0 +1,14 @@
+<%# This component handles question management buttons %>
+<% if ((user.role === 'teacher' || user.role === 'admin') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
+    <div class="btn-group">
+        <a href="/exams/<%= exam._id %>/questions/plan" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Multiple Questions
+        </a>
+        <!-- <a href="/exams/<%= exam._id %>/questions/create" class="btn btn-outline-primary">
+            <i class="fas fa-plus"></i> Add Single Question
+        </a> -->
+        <a href="/exams/<%= exam._id %>/questions" class="btn btn-info">
+            <i class="fas fa-list"></i> Manage Questions
+        </a>
+    </div>
+<% } %> 

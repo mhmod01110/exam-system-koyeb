@@ -1,0 +1,85 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><%= exam.title %> - Submissions</h3>
+                <a href="/exams/<%= exam._id %>" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Exam
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Exam Info -->
+            <div class="mb-4">
+                <p class="mb-1"><strong>Department:</strong> <%= exam.department.name %></p>
+                <p class="mb-1"><strong>Created By:</strong> <%= exam.createdBy.firstName %> <%= exam.createdBy.lastName %></p>
+                <p class="mb-0"><strong>Total Submissions:</strong> <%= submissions.length %></p>
+            </div>
+
+            <!-- Submissions Table -->
+            <% if (submissions.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Submitted At</th>
+                                <th>Status</th>
+                                <th>Grade</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% submissions.forEach(submission => { %>
+                                <tr>
+                                    <td>
+                                        <%= submission.studentId.firstName %> <%= submission.studentId.lastName %>
+                                        <br>
+                                        <small class="text-muted"><%= submission.studentId.email %></small>
+                                    </td>
+                                    <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
+                                    <td>
+                                        <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
+                                            <%= submission.status %>
+                                            <% if (submission.status === 'GRADED') { %>
+                                                (<%= submission.projectSubmission.marksObtained %>/<%= submission.examId.totalMarks %>)
+                                            <% } %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (submission.status === 'GRADED') { %>
+                                            <%= submission.projectSubmission.marksObtained %>/<%= exam.totalMarks %>
+                                            (<%= ((submission.projectSubmission.marksObtained / exam.totalMarks) * 100).toFixed(1) %>%)
+                                        <% } else { %>
+                                            Pending
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="<%= submission.projectSubmission.fileUrl %>" 
+                                               target="_blank"
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-download"></i> View Submission
+                                            </a>
+                                            <a href="/exams/<%= exam._id %>/submissions/<%= submission._id %>/grade" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fas fa-check-circle"></i> 
+                                                <%= submission.status === 'GRADED' ? 'Update Grade' : 'Grade' %>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No submissions yet.
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div> 

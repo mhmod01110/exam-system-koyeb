@@ -1,0 +1,166 @@
+<div class="container mt-4">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0,0,0,0.7); z-index: 9999;">
+        <div class="position-absolute top-50 start-50 translate-middle text-center text-white">
+            <div class="spinner-border mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h4>Uploading Project...</h4>
+            <p class="text-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Please do not close this page or navigate away while your project is being uploaded.
+            </p>
+            <p class="text-light small">You will be automatically redirected once the upload is complete.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0"><%= exam.title %> - Project Submission</h3>
+            <a href="/exams/<%= exam._id %>" class="btn btn-outline-secondary">Back to Exam</a>
+        </div>
+        <div class="card-body">
+            <!-- Project Instructions -->
+            <div class="mb-4">
+                <h4>Project Instructions</h4>
+                <div class="alert alert-info">
+                    <%- exam.instructions %>
+                </div>
+            </div>
+
+            <!-- Submission Form -->
+            <div class="mb-4">
+                <h4>Submit Your Project</h4>
+                <form id="projectSubmissionForm" action="/exams/<%= exam._id %>/submit-project" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
+                    <div class="mb-3">
+                        <label for="projectFile" class="form-label">Project File</label>
+                        <input type="file" class="form-control" id="projectFile" name="projectFile" required 
+                               accept=".jpg,.png,.jpeg,.mp4,.mov,.avi,.mkv,.webm">
+                        <div class="form-text">
+                            Accepted file types: JPG, PNG, JPEG, MP4, MOV, AVI, MKV, WEBM
+                        </div>
+                        <div class="invalid-feedback">
+                            Please select a file to upload
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitButton" class="btn btn-primary">Submit Project</button>
+                </form>
+            </div>
+
+            <!-- Previous Submission -->
+            <% if (existingSubmission) { %>
+                <div class="mt-4">
+                    <h4>Previous Submission</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <p><strong>File:</strong> 
+                                <a href="<%= existingSubmission.projectSubmission.fileUrl %>" target="_blank">
+                                    <%= existingSubmission.projectSubmission.fileName %>
+                                </a>
+                            </p>
+                            <p><strong>Submitted:</strong> 
+                                <%= new Date(existingSubmission.projectSubmission.submittedAt).toLocaleString() %>
+                            </p>
+                            
+                            <% if (existingSubmission.status === 'GRADED') { %>
+                                <div class="alert alert-info">
+                                    <p><strong>Marks:</strong> 
+                                        <%= existingSubmission.projectSubmission.marksObtained %>/<%= exam.totalMarks %>
+                                    </p>
+                                    <% if (existingSubmission.projectSubmission.feedback) { %>
+                                        <p><strong>Feedback:</strong></p>
+                                        <p><%= existingSubmission.projectSubmission.feedback %></p>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation and submission handling
+(function() {
+    'use strict';
+    
+    const form = document.getElementById('projectSubmissionForm');
+    const submitButton = document.getElementById('submitButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    let isUploading = false;
+
+    // Prevent any interaction during upload
+    document.addEventListener('click', function(e) {
+        if (isUploading) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarningMessage();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (isUploading) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarningMessage();
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Show loading overlay and disable form
+        loadingOverlay.classList.remove('d-none');
+        submitButton.disabled = true;
+        isUploading = true;
+        
+        // Disable scrolling
+        document.body.style.overflow = 'hidden';
+        
+        // Let the form submit normally
+        form.classList.add('was-validated');
+    });
+
+    // File size validation
+    const fileInput = document.getElementById('projectFile');
+    const maxSize = 50 * 1024 * 1024; // 50MB max size
+
+    fileInput.addEventListener('change', function() {
+        if (this.files[0] && this.files[0].size > maxSize) {
+            alert('File is too large. Maximum size allowed is 50MB.');
+            this.value = ''; // Clear the file input
+        }
+    });
+
+    // Warning message function
+    function showWarningMessage() {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-50 start-50 translate-middle';
+        warningDiv.style.zIndex = '10000';
+        warningDiv.innerHTML = `
+            <strong><i class="fas fa-exclamation-triangle"></i> Please Wait!</strong>
+            <br>Your project is being uploaded. Please do not interact with the page.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(warningDiv);
+
+        // Remove the warning after 3 seconds
+        setTimeout(() => {
+            warningDiv.remove();
+        }, 3000);
+    }
+})();
+</script>
+

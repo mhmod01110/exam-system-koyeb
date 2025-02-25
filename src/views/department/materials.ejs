@@ -1,0 +1,604 @@
+<%- contentFor('body') %>
+
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><%= department.name %> - Study Materials</h3>
+                <div>
+                    <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
+                            <i class="fas fa-plus"></i> Add Material
+                        </button>
+                    <% } %>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <% if (user.role === 'student') { %>
+                <!-- Student View - Only show their level -->
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Based on your latest exam result, you are at <strong><%= studentLevel %></strong> level in this department.
+                    <% if (studentLevel === 'Beginner') { %>
+                        Complete more exams with score above 50% to unlock Normal materials.
+                    <% } else if (studentLevel === 'Normal') { %>
+                        Complete more exams with score above 70% to unlock Advanced materials.
+                    <% } else { %>
+                        You have access to Advanced materials. Keep up the good work!
+                    <% } %>
+                </div>
+
+                <!-- Student Tabs - Only their level is active -->
+                <ul class="nav nav-pills nav-fill mb-4" id="materialTabs" role="tablist">
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link <%= studentLevel === 'Beginner' ? 'active' : 'disabled' %>" 
+                                id="beginner-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#beginner" 
+                                type="button" 
+                                role="tab"
+                                <%= studentLevel !== 'Beginner' ? 'disabled' : '' %>>
+                            <i class="fas fa-star-half-alt me-2"></i>
+                            Beginner
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Beginner').length %>
+                            </span>
+                        </button>
+                    </li>
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link <%= studentLevel === 'Normal' ? 'active' : 'disabled' %>" 
+                                id="normal-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#normal" 
+                                type="button" 
+                                role="tab"
+                                <%= studentLevel !== 'Normal' ? 'disabled' : '' %>>
+                            <i class="fas fa-star me-2"></i>
+                            Normal
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Normal').length %>
+                            </span>
+                        </button>
+                    </li>
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link <%= studentLevel === 'Advanced' ? 'active' : 'disabled' %>" 
+                                id="advanced-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#advanced" 
+                                type="button" 
+                                role="tab"
+                                <%= studentLevel !== 'Advanced' ? 'disabled' : '' %>>
+                            <i class="fas fa-star me-2"></i>
+                            Advanced
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Advanced').length %>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content - Only show materials for student's level -->
+                <div class="tab-content" id="materialTabsContent">
+                    <% const levels = ['Beginner', 'Normal', 'Advanced']; %>
+                    <% levels.forEach(level => { %>
+                        <div class="tab-pane fade <%= level === studentLevel ? 'show active' : '' %>" 
+                             id="<%= level.toLowerCase() %>" 
+                             role="tabpanel">
+                <div class="list-group">
+                                <% const levelMaterials = department.materials.filter(material => material.level === level); %>
+                                <% if (level === studentLevel && levelMaterials.length > 0) { %>
+                                    <% levelMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-2 mb-2 rounded
+                                            <%= level === 'Beginner' ? 'border-success' : 
+                                                level === 'Normal' ? 'border-primary' : 'border-danger' %>">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 <%= level === 'Beginner' ? 'text-success' : 
+                                                        level === 'Normal' ? 'text-primary' : 'text-danger' %>">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" 
+                                                       class="btn btn-sm <%= level === 'Beginner' ? 'btn-success' : 
+                                                           level === 'Normal' ? 'btn-primary' : 'btn-danger' %>">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                    </a>
+                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else if (level === studentLevel) { %>
+                                    <div class="alert <%= level === 'Beginner' ? 'alert-success' : 
+                                        level === 'Normal' ? 'alert-primary' : 'alert-danger' %> bg-opacity-10">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No <%= level.toLowerCase() %> materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <!-- Teacher/Admin View - Show all tabs -->
+                <ul class="nav nav-pills nav-fill mb-4" id="materialTabs" role="tablist">
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link active" 
+                                id="beginner-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#beginner" 
+                                type="button" 
+                                role="tab">
+                            <i class="fas fa-star-half-alt me-2"></i>
+                            Beginner
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Beginner').length %>
+                            </span>
+                        </button>
+                    </li>
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link" 
+                                id="normal-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#normal" 
+                                type="button" 
+                                role="tab">
+                            <i class="fas fa-star me-2"></i>
+                            Normal
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Normal').length %>
+                            </span>
+                        </button>
+                    </li>
+                    <li class="nav-item mx-1" role="presentation">
+                        <button class="nav-link" 
+                                id="advanced-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#advanced" 
+                                type="button" 
+                                role="tab">
+                            <i class="fas fa-star me-2"></i>
+                            Advanced
+                            <span class="badge ms-2">
+                                <%= department.materials.filter(m => m.level === 'Advanced').length %>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+
+                <style>
+                    /* Base tab styles */
+                    .nav-pills .nav-link {
+                        border-radius: 8px;
+                        padding: 10px 20px;
+                        transition: all 0.3s ease;
+                        margin: 0 5px;
+                        font-weight: 500;
+                    }
+
+                    /* Beginner tab */
+                    #beginner-tab {
+                        color: #198754;
+                        background-color: rgba(25, 135, 84, 0.1);
+                    }
+                    #beginner-tab.active {
+                        color: #fff !important;
+                        background-color: #198754 !important;
+                    }
+                    #beginner-tab .badge {
+                        background-color: #198754;
+                        color: #fff;
+                    }
+                    #beginner-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Normal tab */
+                    #normal-tab {
+                        color: #0d6efd;
+                        background-color: rgba(13, 110, 253, 0.1);
+                    }
+                    #normal-tab.active {
+                        color: #fff !important;
+                        background-color: #0d6efd !important;
+                    }
+                    #normal-tab .badge {
+                        background-color: #0d6efd;
+                        color: #fff;
+                    }
+                    #normal-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Advanced tab */
+                    #advanced-tab {
+                        color: #dc3545;
+                        background-color: rgba(220, 53, 69, 0.1);
+                    }
+                    #advanced-tab.active {
+                        color: #fff !important;
+                        background-color: #dc3545 !important;
+                    }
+                    #advanced-tab .badge {
+                        background-color: #dc3545;
+                        color: #fff;
+                    }
+                    #advanced-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Hover effects */
+                    #beginner-tab:hover:not(.active) {
+                        background-color: rgba(25, 135, 84, 0.2);
+                    }
+                    #normal-tab:hover:not(.active) {
+                        background-color: rgba(13, 110, 253, 0.2);
+                    }
+                    #advanced-tab:hover:not(.active) {
+                        background-color: rgba(220, 53, 69, 0.2);
+                    }
+
+                    /* Content area styling */
+                    .tab-content {
+                        background: #fff;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-top: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                    }
+
+                    /* Material item styling */
+                    .list-group-item {
+                        margin-bottom: 10px;
+                        border-radius: 8px;
+                        transition: all 0.2s ease-in-out;
+                    }
+
+                    .list-group-item:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                </style>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="materialTabsContent">
+                    <!-- Beginner Materials -->
+                    <div class="tab-pane fade show active" id="beginner" role="tabpanel">
+                        <div class="list-group">
+                            <% const beginnerMaterials = department.materials.filter(material => material.level === 'Beginner'); %>
+                            <% if (beginnerMaterials.length > 0) { %>
+                                <% beginnerMaterials.forEach(material => { %>
+                                    <div class="list-group-item list-group-item-action border-success border-2 mb-2 rounded">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-2 text-success">
+                                                    <i class="fas fa-book-reader me-2"></i>
+                                                    <%= material.title %>
+                                                </h5>
+                                                <% if (material.description) { %>
+                                                    <p class="mb-2 text-muted"><%= material.description %></p>
+                                                <% } %>
+                                                <a href="<%= material.url %>" target="_blank" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                </a>
+                                            </div>
+                                            <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                                                <button class="btn btn-outline-danger btn-sm ms-3 delete-material" 
+                                                        data-material-id="<%= material._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="alert alert-success bg-success bg-opacity-10 border-success">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No beginner materials available yet.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Normal Materials -->
+                    <div class="tab-pane fade" id="normal" role="tabpanel">
+                        <div class="list-group">
+                            <% const normalMaterials = department.materials.filter(material => material.level === 'Normal'); %>
+                            <% if (normalMaterials.length > 0) { %>
+                                <% normalMaterials.forEach(material => { %>
+                                    <div class="list-group-item list-group-item-action border-primary border-2 mb-2 rounded">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-2 text-primary">
+                                                    <i class="fas fa-book-reader me-2"></i>
+                                                    <%= material.title %>
+                                                </h5>
+                                                <% if (material.description) { %>
+                                                    <p class="mb-2 text-muted"><%= material.description %></p>
+                                                <% } %>
+                                                <a href="<%= material.url %>" target="_blank" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                </a>
+                                            </div>
+                                            <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                                                <button class="btn btn-outline-danger btn-sm ms-3 delete-material" 
+                                                        data-material-id="<%= material._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="alert alert-primary bg-primary bg-opacity-10 border-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No normal materials available yet.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Materials -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel">
+                        <div class="list-group">
+                            <% const advancedMaterials = department.materials.filter(material => material.level === 'Advanced'); %>
+                            <% if (advancedMaterials.length > 0) { %>
+                                <% advancedMaterials.forEach(material => { %>
+                                    <div class="list-group-item list-group-item-action border-danger border-2 mb-2 rounded">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-2 text-danger">
+                                                    <i class="fas fa-book-reader me-2"></i>
+                                                    <%= material.title %>
+                                                </h5>
+                                                <% if (material.description) { %>
+                                                    <p class="mb-2 text-muted"><%= material.description %></p>
+                                                <% } %>
+                                                <a href="<%= material.url %>" target="_blank" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                </a>
+                                            </div>
+                                            <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                                                <button class="btn btn-outline-danger btn-sm ms-3 delete-material" 
+                                                        data-material-id="<%= material._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No advanced materials available yet.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Add Material Modal -->
+<% if (user.role === 'teacher' || user.role === 'admin') { %>
+    <div class="modal fade" id="addMaterialModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/departments/<%= department._id %>/materials" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Add Study Material
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Level</label>
+                            <select class="form-select" id="level" name="level" required>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Normal" selected>Normal</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Material Source</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="sourceType" id="urlSource" value="url" checked>
+                                <label class="form-check-label" for="urlSource">
+                                    External URL
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="sourceType" id="fileSource" value="file">
+                                <label class="form-check-label" for="fileSource">
+                                    Upload File
+                                </label>
+                            </div>
+                        </div>
+                        <div id="urlInput" class="mb-3">
+                            <label for="url" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="url" name="url">
+                        </div>
+                        <div id="fileInput" class="mb-3" style="display: none;">
+                            <label for="file" class="form-label">File</label>
+                            <input type="file" class="form-control" id="file" name="file">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Material Management -->
+    <script>
+        // Delete Material Handler
+        document.querySelectorAll('.delete-material').forEach(button => {
+            button.addEventListener('click', async function() {
+                if (confirm('Are you sure you want to delete this material?')) {
+                    const materialId = this.dataset.materialId;
+                    try {
+                        const response = await fetch(`/departments/<%= department._id %>/materials/${materialId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'CSRF-Token': '<%= csrfToken %>'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const listItem = this.closest('.list-group-item');
+                            const tabPane = listItem.closest('.tab-pane');
+                            const tabId = tabPane.id;
+                            
+                            // Remove the item
+                            listItem.remove();
+                            
+                            // Update the count in the tab
+                            const badge = document.querySelector(`#${tabId}-tab .badge`);
+                            const newCount = parseInt(badge.textContent) - 1;
+                            badge.textContent = newCount;
+                            
+                            // Show empty message if needed
+                            if (newCount === 0) {
+                                const levelCapitalized = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+                                const alertClass = tabId === 'beginner' ? 'success' : 
+                                                 tabId === 'normal' ? 'primary' : 'danger';
+                                                 
+                                tabPane.querySelector('.list-group').innerHTML = `
+                                    <div class="alert alert-${alertClass} bg-${alertClass} bg-opacity-10 border-${alertClass}">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No ${levelCapitalized.toLowerCase()} materials available yet.
+                                    </div>
+                                `;
+                            }
+                            
+                            // Show success message
+                            const toast = new bootstrap.Toast(Object.assign(document.createElement('div'), {
+                                className: 'toast position-fixed bottom-0 end-0 m-3',
+                                innerHTML: `
+                                    <div class="toast-header bg-success text-white">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong class="me-auto">Success</strong>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                                    </div>
+                                    <div class="toast-body">
+                                        Material deleted successfully
+                                    </div>
+                                `
+                            }));
+                            document.body.appendChild(toast.element);
+                            toast.show();
+                            setTimeout(() => toast.element.remove(), 3000);
+                        } else {
+                            throw new Error('Server responded with an error');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error deleting material. Please try again.');
+                    }
+                }
+            });
+        });
+
+        // Source Type Toggle Handler
+        document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const urlInput = document.getElementById('urlInput');
+                const fileInput = document.getElementById('fileInput');
+                const urlField = document.getElementById('url');
+                const fileField = document.getElementById('file');
+                
+                if (this.value === 'url') {
+                    urlInput.style.display = 'block';
+                    fileInput.style.display = 'none';
+                    urlField.required = true;
+                    fileField.required = false;
+                    fileField.value = ''; // Clear file input
+                } else {
+                    urlInput.style.display = 'none';
+                    fileInput.style.display = 'block';
+                    urlField.required = false;
+                    fileField.required = true;
+                    urlField.value = ''; // Clear URL input
+                }
+            });
+        });
+
+        // Tab Change Handler
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(event) {
+                // Remove active classes from all tabs
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // Add active class to current tab
+                this.classList.add('active');
+                
+                // Update URL hash for direct linking
+                history.pushState(null, '', `#${event.target.getAttribute('data-bs-target').slice(1)}`);
+            });
+        });
+
+        // Form Validation Handler
+        document.querySelector('#addMaterialModal form').addEventListener('submit', function(event) {
+            const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+            const urlField = document.getElementById('url');
+            const fileField = document.getElementById('file');
+            
+            if (sourceType === 'url' && !urlField.value) {
+                event.preventDefault();
+                alert('Please enter a valid URL');
+                return;
+            }
+            
+            if (sourceType === 'file' && !fileField.files[0]) {
+                event.preventDefault();
+                alert('Please select a file');
+                return;
+            }
+        });
+
+        // Initialize Bootstrap Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Handle Initial Tab Based on URL Hash
+        window.addEventListener('load', () => {
+            const hash = window.location.hash;
+            if (hash) {
+                const tab = document.querySelector(`button[data-bs-target="${hash}"]`);
+                if (tab) {
+                    new bootstrap.Tab(tab).show();
+                }
+            }
+        });
+    </script>
+<% } %> 
+

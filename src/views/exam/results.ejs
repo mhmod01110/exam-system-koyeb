@@ -1,0 +1,361 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Results</h1>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Exams</h5>
+                    <h2 class="mb-0"><%= results.length %></h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Passed</h5>
+                    <h2 class="mb-0">
+                        <%= results.filter(r => r.isReleased && r.status === 'PASS').length %>
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Failed</h5>
+                    <h2 class="mb-0">
+                        <%= results.filter(r => r.isReleased && r.status === 'FAIL').length %>
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Average Score</h5>
+                    <h2 class="mb-0">
+                        <% 
+                            const releasedResults = results.filter(r => r.isReleased);
+                            if (releasedResults.length > 0) {
+                                const avgScore = (releasedResults.reduce((sum, r) => sum + r.percentage, 0) / releasedResults.length).toFixed(1);
+                        %>
+                            <%= avgScore %>%
+                        <% } else { %>
+                            --
+                        <% } %>
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group results by department -->
+    <% 
+        // Group results by department
+        const departmentResults = {};
+        results.forEach(result => {
+            const dept = result.examId.department.name || 'Other';
+            if (!departmentResults[dept]) {
+                departmentResults[dept] = {
+                    regular: [],
+                    project: []
+                };
+            }
+            if (result.examId.type === 'PROJECT') {
+                departmentResults[dept].project.push(result);
+            } else {
+                departmentResults[dept].regular.push(result);
+            }
+        });
+    %>
+
+    <div class="accordion" id="departmentAccordion">
+        <% Object.entries(departmentResults).forEach(([department, deptResults], index) => { %>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading<%= index %>">
+                    <button class="accordion-button <%= index === 0 ? '' : 'collapsed' %>" type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#collapse<%= index %>" 
+                            aria-expanded="<%= index === 0 ? 'true' : 'false' %>" 
+                            aria-controls="collapse<%= index %>">
+                        <%= department %>  
+                        <span class="badge bg-primary ms-2">
+                            <%= deptResults.regular.length + deptResults.project.length %> Exams
+                        </span>
+                    </button>
+                </h2>
+                <div id="collapse<%= index %>" 
+                     class="accordion-collapse collapse <%= index === 0 ? 'show' : '' %>" 
+                     aria-labelledby="heading<%= index %>" 
+                     data-bs-parent="#departmentAccordion">
+                    <div class="accordion-body">
+                        <!-- Tabs Navigation -->
+                        <ul class="nav nav-tabs mb-3" id="resultsTabs<%= index %>" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" 
+                                        id="regular-tab-<%= index %>" 
+                                        data-bs-toggle="tab" 
+                                        data-bs-target="#regular-<%= index %>" 
+                                        type="button" 
+                                        role="tab">
+                                    Regular Exams
+                                    <span class="badge bg-secondary ms-1"><%= deptResults.regular.length %></span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" 
+                                        id="project-tab-<%= index %>" 
+                                        data-bs-toggle="tab" 
+                                        data-bs-target="#project-<%= index %>" 
+                                        type="button" 
+                                        role="tab">
+                                    Project Exams
+                                    <span class="badge bg-secondary ms-1"><%= deptResults.project.length %></span>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="resultsTabContent<%= index %>">
+                            <!-- Regular Exams Tab -->
+                            <div class="tab-pane fade show active" id="regular-<%= index %>" role="tabpanel">
+                                <% if (deptResults.regular.length === 0) { %>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> No regular exam results found.
+                                    </div>
+                                <% } else { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Exam</th>
+                                                    <th>Date</th>
+                                                    <th>Score</th>
+                                                    <th>Grade</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% deptResults.regular.forEach(result => { %>
+                                                    <tr>
+                                                        <td>
+                                                            <%= result.examId.title %>
+                                                            <% if (result.flags.appealRequested) { %>
+                                                                <span class="badge bg-warning ms-1" title="Appeal Requested">
+                                                                    <i class="fas fa-gavel"></i>
+                                                                </span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <div class="progress" style="height: 20px;">
+                                                                    <div class="progress-bar bg-<%= result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger' %>"
+                                                                         role="progressbar"
+                                                                         style="width: <%= result.percentage %>%"
+                                                                         aria-valuenow="<%= result.percentage %>"
+                                                                         aria-valuemin="0"
+                                                                         aria-valuemax="100">
+                                                                        <%= result.percentage.toFixed(1) %>%
+                                                                    </div>
+                                                                </div>
+                                                            <% } else { %>
+                                                                <span class="text-muted">Results not released yet</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <span class="badge bg-<%= 
+                                                                    result.grade === 'A+' || result.grade === 'A' ? 'success' :
+                                                                    result.grade === 'B+' || result.grade === 'B' ? 'primary' :
+                                                                    result.grade === 'C+' || result.grade === 'C' ? 'info' :
+                                                                    result.grade === 'D' ? 'warning' : 'danger' %>">
+                                                                    <%= result.grade %>
+                                                                </span>
+                                                            <% } else { %>
+                                                                <span class="text-muted">-</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                                    <%= result.status %>
+                                                                </span>
+                                                            <% } else { %>
+                                                                <span class="badge bg-secondary">Pending</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <% if (result.isReleased) { %>
+                                                                    <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>" 
+                                                                       class="btn btn-sm btn-info">
+                                                                        <i class="fas fa-eye"></i> View
+                                                                    </a>
+                                                                <% } else { %>
+                                                                    <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                                                        <i class="fas fa-clock"></i> Awaiting Release
+                                                                    </button>
+                                                                <% } %>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Project Exams Tab -->
+                            <div class="tab-pane fade" id="project-<%= index %>" role="tabpanel">
+                                <% if (deptResults.project.length === 0) { %>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> No project exam results found.
+                                    </div>
+                                <% } else { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Project</th>
+                                                    <th>Date</th>
+                                                    <th>Score</th>
+                                                    <th>Grade</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% deptResults.project.forEach(result => { %>
+                                                    <tr>
+                                                        <td>
+                                                            <%= result.examId.title %>
+                                                            <% if (result.flags.appealRequested) { %>
+                                                                <span class="badge bg-warning ms-1" title="Appeal Requested">
+                                                                    <i class="fas fa-gavel"></i>
+                                                                </span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <div class="progress" style="height: 20px;">
+                                                                    <div class="progress-bar bg-<%= result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger' %>"
+                                                                         role="progressbar"
+                                                                         style="width: <%= result.percentage %>%"
+                                                                         aria-valuenow="<%= result.percentage %>"
+                                                                         aria-valuemin="0"
+                                                                         aria-valuemax="100">
+                                                                        <%= result.percentage.toFixed(1) %>%
+                                                                    </div>
+                                                                </div>
+                                                            <% } else { %>
+                                                                <span class="text-muted">Results not released yet</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <span class="badge bg-<%= 
+                                                                    result.grade === 'A+' || result.grade === 'A' ? 'success' :
+                                                                    result.grade === 'B+' || result.grade === 'B' ? 'primary' :
+                                                                    result.grade === 'C+' || result.grade === 'C' ? 'info' :
+                                                                    result.grade === 'D' ? 'warning' : 'danger' %>">
+                                                                    <%= result.grade %>
+                                                                </span>
+                                                            <% } else { %>
+                                                                <span class="text-muted">-</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                                    <%= result.status %>
+                                                                </span>
+                                                            <% } else { %>
+                                                                <span class="badge bg-secondary">Pending</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <% if (result.isReleased) { %>
+                                                                    <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>" 
+                                                                       class="btn btn-sm btn-info">
+                                                                        <i class="fas fa-eye"></i> View
+                                                                    </a>
+                                                                <% } else { %>
+                                                                    <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                                                        <i class="fas fa-clock"></i> Awaiting Release
+                                                                    </button>
+                                                                <% } %>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</div>
+
+<!-- Appeal Modal -->
+<div class="modal fade" id="appealModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/exams/results/appeal" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="resultId" id="appealResultId">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Appeal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="appealReason" class="form-label">Reason for Appeal</label>
+                        <textarea name="appealReason" 
+                                  id="appealReason" 
+                                  class="form-control" 
+                                  rows="4"
+                                  required></textarea>
+                        <div class="form-text">
+                            Please provide a detailed explanation for your appeal request.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Appeal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Appeal Modal Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const appealModal = document.getElementById('appealModal');
+    const appealResultId = document.getElementById('appealResultId');
+    
+    appealModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const resultId = button.dataset.resultId;
+        appealResultId.value = resultId;
+    });
+});
+</script> 

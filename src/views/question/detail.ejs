@@ -1,0 +1,171 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="card-title mb-1">Question Details</h1>
+                    <p class="text-muted mb-0">
+                        Created by <%= question.createdBy.firstName %> <%= question.createdBy.lastName %> |
+                        Exam: <%= question.examId.title %>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <% if ((user.role === 'teacher' || user.role === 'admin') && 
+                          (question.createdBy._id.toString() === user._id.toString() || 
+                           user.role === 'admin')) { %>
+                        <a href="/exams/<%= question.examId._id %>/questions/<%= question._id %>/edit" 
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form action="/exams/<%= question.examId._id %>/questions/<%= question._id %>" 
+                              method="POST"
+                              onsubmit="return confirm('Are you sure you want to delete this question?');">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Question Information -->
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Question Text -->
+                    <div class="mb-4">
+                        <h5>Question</h5>
+                        <p class="mb-0"><%= question.text %></p>
+                    </div>
+
+                    <!-- Images -->
+                    <% if (question.images && question.images.length > 0) { %>
+                        <div class="mb-4">
+                            <h5>Images</h5>
+                            <div class="row">
+                                <% question.images.forEach(image => { %>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <img src="<%= image.url %>" 
+                                                 class="card-img-top" 
+                                                 alt="Question image">
+                                            <% if (image.caption) { %>
+                                                <div class="card-body">
+                                                    <p class="card-text text-muted">
+                                                        <%= image.caption %>
+                                                    </p>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Answer Options/Details -->
+                    <div class="mb-4">
+                        <h5>Answer Details</h5>
+                        <% if (question.type === 'MCQ') { %>
+                            <div class="list-group">
+                                <% question.options.forEach(option => { %>
+                                    <div class="list-group-item <%= option.isCorrect ? 'list-group-item-success' : '' %>">
+                                        <div class="d-flex align-items-center">
+                                            <% if (option.isCorrect) { %>
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-circle text-muted me-2"></i>
+                                            <% } %>
+                                            <%= option.text %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else if (question.type === 'TrueFalse') { %>
+                            <div class="alert alert-info">
+                                Correct Answer: <%= question.correctAnswer %>
+                            </div>
+                        <% } else if (question.type === 'ShortAnswer') { %>
+                            <div class="alert alert-info">
+                                Expected Answer: <%= question.correctAnswer %>
+                            </div>
+                        <% } else if (question.type === 'Essay') { %>
+                            <div class="alert alert-info">
+                                This is an essay question that requires manual grading.
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Explanation -->
+                    <% if (question.explanation) { %>
+                        <div class="mb-4">
+                            <h5>Explanation</h5>
+                            <div class="alert alert-secondary">
+                                <%= question.explanation %>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Question Metadata -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Question Information</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-tag"></i>
+                                    Type: <%= question.type %>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-star"></i>
+                                    Marks: <%= question.marks %>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-chart-line"></i>
+                                    Difficulty: 
+                                    <span class="badge bg-<%= 
+                                        question.difficulty === 'Easy' ? 'success' : 
+                                        question.difficulty === 'Medium' ? 'warning' : 
+                                        'danger' %>">
+                                        <%= question.difficulty %>
+                                    </span>
+                                </li>
+                                <% if (question.tags && question.tags.length > 0) { %>
+                                    <li class="mb-2">
+                                        <i class="fas fa-tags"></i>
+                                        Tags:
+                                        <div class="mt-1">
+                                            <% question.tags.forEach(tag => { %>
+                                                <span class="badge bg-secondary me-1">
+                                                    <%= tag %>
+                                                </span>
+                                            <% }); %>
+                                        </div>
+                                    </li>
+                                <% } %>
+                                <li class="mb-2">
+                                    <i class="fas fa-clock"></i>
+                                    Created: <%= new Date(question.createdAt).toLocaleString() %>
+                                </li>
+                                <% if (question.updatedAt > question.createdAt) { %>
+                                    <li>
+                                        <i class="fas fa-edit"></i>
+                                        Last Updated: <%= new Date(question.updatedAt).toLocaleString() %>
+                                    </li>
+                                <% } %>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-4">
+                <a href="/exams/<%= question.examId._id %>/questions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Questions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

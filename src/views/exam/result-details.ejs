@@ -1,0 +1,266 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0"><%= exam.title %> - Results</h2>
+            <div>
+                <span class="badge bg-light text-dark me-2">Grade: <%= result.grade %></span>
+                <span class="badge bg-light text-dark">
+                    Score: <%= result.obtainedMarks %>/<%= result.totalMarks %> (<%= result.percentage.toFixed(2) %>%)
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- Student Info -->
+            <div class="mb-4">
+                <h4>Student Information</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> <%= result.studentId.firstName %> <%= result.studentId.lastName %></p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                <%= result.status %>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Attempt Number:</strong> <%= submission.attemptNumber %></p>
+                        <p><strong>Submitted At:</strong> <%= submission.submittedAt.toLocaleString() %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div class="mb-4">
+                <h4>Performance Analytics</h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>Score Rate</h5>
+                                <h3 class="text-<%= result.percentage >= 60 ? 'success' : 'danger' %>">
+                                    <%= result.analytics.accuracyRate.toFixed(1) %>%
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>Time Spent</h5>
+                                <% 
+                                let timeSpent;
+                                if (exam.type === 'PROJECT' && attempt) {
+                                    const startTime = new Date(attempt.startTime);
+                                    const endTime = new Date(attempt.submittedAt);
+                                    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                    const seconds = totalSeconds % 60;
+                                    timeSpent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                } else {
+                                    const startTime = new Date(submission.startedAt);
+                                    const endTime = new Date(submission.completedAt);
+                                    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                    const seconds = totalSeconds % 60;
+                                    timeSpent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                }
+                                %>
+                                <h3 class="text-info"><%= timeSpent %></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>Attempt Details</h5>
+                                <div class="text-muted">
+                                    <p class="mb-1">
+                                        <strong>Started:</strong><br>
+                                        <%= exam.type === 'PROJECT' && attempt ? 
+                                            new Date(attempt.startTime).toLocaleString() :
+                                            new Date(submission.startedAt).toLocaleString() %>
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Submitted:</strong><br>
+                                        <%= exam.type === 'PROJECT' && attempt ? 
+                                            new Date(attempt.submittedAt).toLocaleString() :
+                                            new Date(submission.completedAt).toLocaleString() %>
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Attempt #:</strong> <%= submission.attemptNumber %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <% if (exam.type === 'PROJECT') { %>
+                <!-- Project Submission Details -->
+                <div class="mt-4">
+                    <h4>Project Submission Details</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <% if (submission.projectSubmission) { %>
+                                <!-- Project File -->
+                                <div class="mb-4">
+                                    <h5>Submitted File</h5>
+                                    <p>
+                                        <strong>File Name:</strong> <%= submission.projectSubmission.fileName %><br>
+                                        <strong>Submitted At:</strong> <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %><br>
+                                        <% if (submission.projectSubmission.fileUrl) { %>
+                                            <a href="<%= submission.projectSubmission.fileUrl %>" class="btn btn-sm btn-primary mt-2" target="_blank">
+                                                <i class="fas fa-download"></i> Download Project File
+                                            </a>
+                                        <% } %>
+                                    </p>
+                                </div>
+
+                                <!-- Teacher's Feedback -->
+                                <div class="mb-4">
+                                    <h5>Teacher's Feedback</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <p class="mb-0"><%= submission.projectSubmission.feedback.text %></p>
+                                            <small class="text-muted mt-2 d-block">
+                                                Feedback given on: <%= new Date(submission.projectSubmission.feedback.givenAt).toLocaleString() %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Project submission details are not available.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% } else { %>
+                <!-- Questions and Answers for non-project exams -->
+                <div class="mt-4">
+                    <h4>Questions and Answers</h4>
+                    <% allAnswers.forEach((answer, index) => { %>
+                        <div class="card mb-3 <%= answer.isCorrect ? 'border-success' : 'border-danger' %>">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Question <%= index + 1 %> (<%= answer.type %>)</span>
+                                <span class="badge bg-<%= answer.isCorrect ? 'success' : 'danger' %>">
+                                    <%= answer.marksObtained %>/<%= answer.questionId.marks %> marks
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title"><%= answer.questionId.text %></h5>
+                                
+                                <% if (answer.type === 'MCQ') { %>
+                                    <div class="options-list">
+                                        <% answer.questionId.options.forEach(option => { %>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                    disabled 
+                                                    <%= option._id.toString() === answer.selectedOption.toString() ? 'checked' : '' %>>
+                                                <label class="form-check-label <%= 
+                                                    option.isCorrect ? 'text-success fw-bold' : 
+                                                    (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect ? 'text-danger' : '')
+                                                %>">
+                                                    <%= option.text %>
+                                                    <% if (option.isCorrect) { %> 
+                                                        <i class="fas fa-check text-success"></i>
+                                                    <% } else if (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect) { %>
+                                                        <i class="fas fa-times text-danger"></i>
+                                                    <% } %>
+                                                </label>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else if (answer.type === 'TrueFalse') { %>
+                                    <div class="true-false-answer">
+                                        <p>Your Answer: 
+                                            <span class="<%= answer.isCorrect ? 'text-success' : 'text-danger' %>">
+                                                <%= answer.answer %>
+                                            </span>
+                                        </p>
+                                        <p>Correct Answer: 
+                                            <span class="text-success">
+                                                <%= answer.questionId.correctAnswer %>
+                                            </span>
+                                        </p>
+                                    </div>
+                                <% } %>
+
+                                <% if (!answer.isCorrect && answer.questionId.explanation) { %>
+                                    <div class="mt-3 explanation alert alert-info">
+                                        <strong>Explanation:</strong> <%= answer.questionId.explanation %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card-footer">
+            <a href="/exams/<%= exam._id %>" class="btn btn-primary">Back to Exam</a>
+            <% if (!result.flags.appealRequested && result.status === 'FAIL') { %>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#appealModal" data-result-id="<%= result._id %>">
+                    <i class="fas fa-gavel"></i> Request Appeal
+                </button>
+            <% } %>
+            <% if (user.role === 'admin' || exam.createdBy.toString() === user._id.toString()) { %>
+                <a href="/exams/<%= exam._id %>/analytics" class="btn btn-info">View Full Analytics</a>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Appeal Modal -->
+<div class="modal fade" id="appealModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/exams/results/appeal" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="resultId" id="appealResultId">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Appeal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="appealReason" class="form-label">Reason for Appeal</label>
+                        <textarea name="appealReason" 
+                                  id="appealReason" 
+                                  class="form-control" 
+                                  rows="4"
+                                  required></textarea>
+                        <div class="form-text">
+                            Please provide a detailed explanation for your appeal request.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Appeal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Appeal Modal Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const appealModal = document.getElementById('appealModal');
+    const appealResultId = document.getElementById('appealResultId');
+    
+    appealModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const resultId = button.dataset.resultId;
+        appealResultId.value = resultId;
+    });
+});
+</script>

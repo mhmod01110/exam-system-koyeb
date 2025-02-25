@@ -1,0 +1,63 @@
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <h5>من نحن</h5>
+                <p class="text-muted">تمكين التعليم من خلال حلول الاختبارات عبر الإنترنت المبتكرة.</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/mahmoud.shawqi.52" class="text-dark ms-2"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.linkedin.com/in/mhmod01110/" class="text-dark ms-2"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://wa.me/201012482107" class="text-dark ms-2"><i class="fab fa-whatsapp"></i></a>  
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <h5>روابط سريعة</h5>
+                <ul class="list-unstyled">
+                    <li><a href="/about" class="text-decoration-none text-dark"><i class="fas fa-info-circle ms-2"></i>عن النظام</a></li>
+                    <li><a href="/contact" class="text-decoration-none text-dark"><i class="fas fa-envelope ms-2"></i>اتصل بنا</a></li>
+                    <li><a href="/privacy-policy" class="text-decoration-none text-dark"><i class="fas fa-shield-alt ms-2"></i>سياسة الخصوصية</a></li>
+                    <li><a href="/terms-of-service" class="text-decoration-none text-dark"><i class="fas fa-file-contract ms-2"></i>شروط الخدمة</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>معلومات الاتصال</h5>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-map-marker-alt ms-2"></i>مصر، القاهرة</li>
+                    <li><i class="fas fa-phone ms-2"></i>٢٠١٠١٢٤٨٢١٠٧+</li>
+                    <li><i class="fas fa-envelope ms-2"></i>mhmod.mhmod01110@gmail.com</li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <p class="mb-0">جميع الحقوق محفوظة &copy; <%= new Date().getFullYear() %> نظام الاختبارات.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+.footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    border-top: 1px solid #dee2e6;
+}
+
+@media (min-width: 768px) {
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    main {
+        flex: 1 0 auto;
+    }
+    
+    .footer {
+        flex-shrink: 0;
+    }
+}
+</style> 

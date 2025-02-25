@@ -1,0 +1,148 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">إنشاء حساب</h3>
+                </div>
+                <div class="card-body">
+                    <% if (error && error.length > 0) { %>
+                        <div class="alert alert-danger">
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <form action="/auth/register" method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">الاسم الأول</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="firstName" 
+                                   name="firstName" 
+                                   required 
+                                   autofocus>
+                            <div class="invalid-feedback">
+                                يرجى إدخال الاسم الأول.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">اسم العائلة</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="lastName" 
+                                   name="lastName" 
+                                   required>
+                            <div class="invalid-feedback">
+                                يرجى إدخال اسم العائلة.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">البريد الإلكتروني</label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   required>
+                            <div class="invalid-feedback">
+                                يرجى إدخال بريد إلكتروني صحيح.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">كلمة المرور</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   required 
+                                   minlength="6">
+                            <div class="invalid-feedback">
+                                يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">تأكيد كلمة المرور</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="confirmPassword" 
+                                   name="confirmPassword" 
+                                   required 
+                                   minlength="6">
+                            <div class="invalid-feedback">
+                                يجب أن تتطابق كلمتا المرور.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">نوع الحساب</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="student">طالب</option>
+                                <!-- <option value="admin">مدير</option>
+                                <option value="teacher">معلم</option>     -->
+                            </select>
+                            <div class="invalid-feedback">
+                                يرجى اختيار نوع الحساب.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">إنشاء حساب</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">لديك حساب بالفعل؟ <a href="/auth/login" class="text-decoration-none">تسجيل الدخول</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Check if passwords match
+            const password = form.querySelector('#password');
+            const confirmPassword = form.querySelector('#confirmPassword');
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('كلمتا المرور غير متطابقتين');
+                event.preventDefault();
+                event.stopPropagation();
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+        
+        // Real-time password match validation
+        const password = form.querySelector('#password');
+        const confirmPassword = form.querySelector('#confirmPassword');
+        if (password && confirmPassword) {
+            [password, confirmPassword].forEach(input => {
+                input.addEventListener('input', () => {
+                    if (password.value !== confirmPassword.value) {
+                        confirmPassword.setCustomValidity('كلمتا المرور غير متطابقتين');
+                    } else {
+                        confirmPassword.setCustomValidity('');
+                    }
+                });
+            });
+        }
+    });
+})();
+</script> 

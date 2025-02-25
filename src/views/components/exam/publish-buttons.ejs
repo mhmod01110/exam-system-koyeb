@@ -1,0 +1,88 @@
+<%# This component shows publish/unpublish buttons for exams %>
+<% if ((user.role === 'admin' || user.role === 'teacher') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
+    <div class="publish-controls" data-exam-id="<%= exam._id %>">
+        <% if (exam.status === 'draft') { %>
+            <button class="btn btn-success publish-exam" onclick="publishExam('<%= exam._id %>')">
+                <i class="fas fa-check-circle me-2"></i>Publish Exam
+            </button>
+        <% } else if (exam.status === 'published') { %>
+            <button class="btn btn-warning unpublish-exam" onclick="unpublishExam('<%= exam._id %>')">
+                <i class="fas fa-times-circle me-2"></i>Unpublish Exam
+            </button>
+        <% } %>
+    </div>
+
+    <script>
+        async function publishExam(examId) {
+            if (!confirm('Are you sure you want to publish this exam?')) return;
+            
+            try {
+                const response = await fetch(`/exams/${examId}/publish`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    showAlert('success', 'Exam published successfully');
+                    // Reload page to show updated status
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || 'Error publishing exam');
+                }
+            } catch (error) {
+                showAlert('error', error.message || 'Error publishing exam');
+            }
+        }
+
+        async function unpublishExam(examId) {
+            if (!confirm('Are you sure you want to unpublish this exam? Students will no longer be able to access it.')) return;
+            
+            try {
+                const response = await fetch(`/exams/${examId}/unpublish`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    showAlert('success', 'Exam unpublished successfully');
+                    // Reload page to show updated status
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || 'Error unpublishing exam');
+                }
+            } catch (error) {
+                showAlert('error', error.message || 'Error unpublishing exam');
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Insert alert at the top of the main content
+            const mainContent = document.querySelector('main');
+            mainContent.insertBefore(alertDiv, mainContent.firstChild);
+            
+            // Auto dismiss after 3 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+    </script>
+<% } %> 

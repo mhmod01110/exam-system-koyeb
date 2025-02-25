@@ -1,0 +1,192 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Student Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="card-title">
+                                <%= student.firstName %> <%= student.lastName %>
+                                <% if (!student.isActive) { %>
+                                    <span class="badge bg-warning">Inactive</span>
+                                <% } %>
+                            </h2>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-envelope"></i> <%= student.email %><br>
+                                <i class="fas fa-building"></i> Department: <%= student.department ? student.department.name : 'N/A' %>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button class="btn btn-warning toggle-status" data-user-id="<%= student._id %>" data-current-status="<%= student.isActive %>">
+                                <i class="fas fa-<%= student.isActive ? 'ban' : 'check' %>"></i>
+                                <%= student.isActive ? 'Deactivate' : 'Activate' %> Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Exams Taken</h6>
+                            <h2 class="mb-0"><%= stats.totalExams %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Average Score</h6>
+                            <h2 class="mb-0"><%= stats.averageScore ? stats.averageScore.toFixed(1) + '%' : 'N/A' %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Passed Exams</h6>
+                            <h2 class="mb-0"><%= stats.passedExams %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Failed Exams</h6>
+                            <h2 class="mb-0"><%= stats.failedExams %></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Exams -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Exam History</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Exam Title</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Time Taken</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% examHistory.forEach(result => { %>
+                                    <tr>
+                                        <td><%= result.examId.title %></td>
+                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                        <td>
+                                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                <%= result.percentage.toFixed(1) %>%
+                                            </span>
+                                        </td>
+                                        <td><%= Math.floor(result.analytics?.timeSpent / 60) || 0 %> minutes</td>
+                                        <td>
+                                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                <%= result.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Performance Chart
+const ctx = document.getElementById('performanceChart').getContext('2d');
+const performanceData = JSON.parse('<%- JSON.stringify(performanceData) %>');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: performanceData.map(d => new Date(d.date).toLocaleDateString()),
+        datasets: [{
+            label: 'Exam Scores',
+            data: performanceData.map(d => d.score),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Toggle status functionality
+document.querySelector('.toggle-status').addEventListener('click', function() {
+    const userId = this.dataset.userId;
+    const currentStatus = this.dataset.currentStatus === 'true';
+    
+    if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) {
+        fetch(`/admin/users/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Error updating user status');
+            }
+        });
+    }
+});
+
+// Export functions
+function exportToPDF() {
+    window.location.href = `/admin/users/students/<%= student._id %>/export-pdf`;
+}
+
+function exportToExcel() {
+    window.location.href = `/admin/users/students/<%= student._id %>/export-excel`;
+}
+</script>

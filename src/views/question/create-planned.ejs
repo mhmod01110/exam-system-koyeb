@@ -1,0 +1,147 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Add Questions to Exam</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/<%= examId %>/questions/create-bulk" method="POST" id="questionForm">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <% if (mcqCount > 0) { %>
+                            <h4 class="mb-4">Multiple Choice Questions</h4>
+                            <% for(let i = 0; i < mcqCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>MCQ Question #<%= i + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="MCQ">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Options</label>
+                                            <% for(let j = 0; j < 4; j++) { %>
+                                                <div class="input-group mb-2">
+                                                    <div class="input-group-text">
+                                                        <input type="radio" name="questions[<%= i %>][correctOption]" value="<%= j %>" required>
+                                                    </div>
+                                                    <input type="text" class="form-control" name="questions[<%= i %>][options][]" placeholder="Option <%= j + 1 %>" required>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (trueFalseCount > 0) { %>
+                            <h4 class="mb-4">True/False Questions</h4>
+                            <% for(let i = mcqCount; i < mcqCount + trueFalseCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>True/False Question #<%= i - mcqCount + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="TrueFalse">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Correct Answer</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="questions[<%= i %>][correctAnswer]" value="true" required>
+                                                <label class="form-check-label">True</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="questions[<%= i %>][correctAnswer]" value="false" required>
+                                                <label class="form-check-label">False</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (shortAnswerCount > 0) { %>
+                            <h4 class="mb-4">Short Answer Questions</h4>
+                            <% for(let i = mcqCount + trueFalseCount; i < mcqCount + trueFalseCount + shortAnswerCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>Short Answer Question #<%= i - (mcqCount + trueFalseCount) + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="ShortAnswer">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Correct Answer</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][correctAnswer]" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (longAnswerCount > 0) { %>
+                            <h4 class="mb-4">Long Answer Questions</h4>
+                            <% for(let i = mcqCount + trueFalseCount + shortAnswerCount; i < mcqCount + trueFalseCount + shortAnswerCount + longAnswerCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>Long Answer Question #<%= i - (mcqCount + trueFalseCount + shortAnswerCount) + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="Essay">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Model Answer</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][correctAnswer]" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Save All Questions</button>
+                            <a href="/exams/<%= examId %>" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

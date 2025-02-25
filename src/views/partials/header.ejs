@@ -1,0 +1,83 @@
+<header class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">نظام الاختبارات</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <% if (user) { %>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>" href="/dashboard">
+                            <i class="fas fa-tachometer-alt ms-1"></i>لوحة التحكم
+                        </a>
+                    </li>
+                    
+                    <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/exams')) ? 'active' : '' %>" href="/exams">
+                                <i class="fas fa-file-alt ms-1"></i>الاختبارات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/results-survey')) ? 'active' : '' %>" href="/results-survey">
+                                <i class="fas fa-chart-line ms-1"></i>مسح النتائج
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <% if (user.role === 'student') { %>
+                        <li class="nav-item">
+                            <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/my-exams') ? 'active' : '' %>" href="/my-exams">
+                                <i class="fas fa-pencil-alt ms-1"></i>اختباراتي
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/results') ? 'active' : '' %>" href="/results">
+                                <i class="fas fa-chart-bar ms-1"></i>النتائج
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <% if (user.role === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/admin/users') ? 'active' : '' %>" href="/admin/users">
+                                <i class="fas fa-users ms-1"></i>المستخدمين
+                            </a>
+                        </li>
+                    <% } %>
+                <% } %>
+            </ul>
+            
+            <ul class="navbar-nav">
+                <% if (user) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle ms-1"></i><%= user.name.toUpperCase() %>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/auth/logout" method="POST" class="d-inline">
+                                    <% if (typeof csrfToken !== 'undefined') { %>
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <% } %>
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-sign-out-alt ms-2"></i>تسجيل الخروج
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/auth/login') ? 'active' : '' %>" href="/auth/login">
+                            <i class="fas fa-sign-in-alt ms-1"></i>تسجيل الدخول
+                        </a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</header> 

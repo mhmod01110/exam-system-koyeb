@@ -1,0 +1,322 @@
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex flex-column mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="mb-1"><%= exam.title %></h1>
+                <p class="text-muted mb-0">
+                    Created by : "<%= exam.createdBy.name.toUpperCase() %>"  |  
+                    Department: <%= exam.department.name %>
+                </p>
+            </div>
+            <a href="/exams" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Exams
+            </a>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 justify-content-start">
+            <%- include('../components/exam/questions-buttons', { exam, user }) %>
+            <%- include('../components/exam/edit-buttons', { exam, user, csrfToken }) %>
+            <%- include('../components/exam/delete-button', { exam, user, csrfToken }) %>
+            <%- include('../components/exam/publish-buttons', { exam, user }) %>
+        </div>
+    </div>
+
+    <!-- Status Alert -->
+    <div class="card mb-4">
+        <div class="card-body <%= 
+            exam.status === 'PUBLISHED' ? 'bg-success text-white' :
+            exam.status === 'DRAFT' ? 'bg-secondary text-white' :
+            'bg-dark text-white' %>">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Status:</strong> <%= exam.status %>
+                    <% if (exam.status === 'PUBLISHED') { %>
+                        <span class="ms-2">
+                            <i class="fas fa-clock"></i> Available until: <%= new Date(exam.endDate).toLocaleString() %>
+                        </span>
+                    <% } %>
+                </div>
+                <% if (exam.status === 'PUBLISHED' && user.role === 'student') { %>
+                    <% if (new Date() <= new Date(exam.endDate)) { %>
+                        <a href="/exams/<%= exam._id %>/start" class="btn btn-light">
+                            <i class="fas fa-play"></i> Start Exam
+                        </a>
+                    <% } else { %>
+                        <span class="badge bg-danger">Exam Expired</span>
+                    <% } %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Description -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Description</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0"><%= exam.description || 'No description provided' %></p>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <% if (exam.instructions) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-0">
+                            <%= exam.instructions %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Questions Section -->
+            <% if (exam.type !== 'PROJECT') { %>
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Questions</h5>
+                        <% if ((user.role === 'teacher' || user.role === 'admin') && 
+                            (exam.createdBy._id.toString() === user._id.toString() || 
+                            user.role === 'admin')) { %>
+                            <a href="/exams/<%= exam._id %>/questions/create" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Add Question
+                            </a>
+                        <% } %>
+                    </div>
+                    <div class="card-body">
+                        <% if (exam.questions.length === 0) { %>
+                            <div class="mb-0">
+                                <i class="fas fa-exclamation-triangle"></i> No questions added yet.
+                            </div>
+                        <% } else { %>
+                            <div class="list-group">
+                                <% exam.questions.forEach((question, index) => { %>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">Question <%= index + 1 %></h6>
+                                                <p class="mb-1 text-muted">
+                                                    <%= question.text.substring(0, 7) %> ....
+                                                </p>
+                                                <small>
+                                                    Type: <span class="badge bg-info"><%= question.type %></span>
+                                                    Marks: <span class="badge bg-secondary"><%= question.marks %></span>
+                                                </small>
+                                            </div>
+                                            <% if ((user.role === 'teacher' || user.role === 'admin') && 
+                                                (exam.createdBy._id.toString() === user._id.toString() || 
+                                                user.role === 'admin')) { %>
+                                                <div class="btn-group">
+                                                    <a href="/exams/<%= exam._id %>/questions/<%= question._id %>" 
+                                                    class="btn btn-sm btn-info">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/exams/<%= exam._id %>/questions/<%= question._id %>/edit" 
+                                                    class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Exam Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Exam Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-clock"></i>
+                            Duration: <%= exam.duration %> minutes
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-calendar-alt"></i>
+                            Start Date: <%= new Date(exam.startDate).toLocaleDateString('en-GB', { 
+                                day: '2-digit', 
+                                month: 'short', 
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-calendar-times"></i>
+                            End Date: <%= new Date(exam.endDate).toLocaleDateString('en-GB', { 
+                                day: '2-digit', 
+                                month: 'short', 
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-star"></i>
+                            Total Marks: <%= exam.totalMarks %>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle"></i>
+                            Passing Marks: <%= exam.passingMarks %>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-question-circle"></i>
+                            Type: <%= exam.type %>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-redo"></i>
+                            Maximum Attempts: <%= exam.maxAttempts %>
+                        </li>
+                        <% if (exam.resultReleaseDate) { %>
+                            <li class="mb-2">
+                                <i class="fas fa-chart-bar"></i>
+                                Results Release: <%= new Date(exam.resultReleaseDate).toLocaleDateString('en-GB', { 
+                                    day: '2-digit', 
+                                    month: 'short', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) %>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Settings</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-random"></i>
+                            Shuffle Questions: 
+                            <span class="badge bg-<%= exam.shuffleQuestions ? 'success' : 'danger' %>">
+                                <%= exam.shuffleQuestions ? 'Yes' : 'No' %>
+                            </span>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-eye"></i>
+                            Show Results: 
+                            <span class="badge bg-<%= exam.showResults ? 'success' : 'danger' %>">
+                                <%= exam.showResults ? 'Yes' : 'No' %>
+                            </span>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-globe"></i>
+                            Public Access: 
+                            <span class="badge bg-<%= exam.isPublic ? 'success' : 'danger' %>">
+                                <%= exam.isPublic ? 'Yes' : 'No' %>
+                            </span>
+                        </li>
+                        <% if ((user.role === 'teacher' || user.role === 'admin') && exam.status === 'PUBLISHED') { %>
+                            <li class="mt-4">
+                                <button class="btn btn-success" onclick="releaseResults('<%= exam._id %>')">
+                                    <i class="fas fa-chart-bar"></i> Release Results
+                                </button>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Student Attempts -->
+            <% if (user.role === 'student' && attempts && attempts.length > 0) { %>
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Your Attempts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <% attempts.forEach(attempt => { %>
+                                <a href="/exams/<%= exam._id %>/attempt/<%= attempt._id %>" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Attempt <%= attempt.attemptNumber %></h6>
+                                            <small class="text-muted">
+                                                <%= new Date(attempt.startedAt).toLocaleDateString('en-GB', { 
+                                                    day: '2-digit', 
+                                                    month: 'short', 
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                }) %>
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-<%= 
+                                            attempt.status === 'SUBMITTED' ? 'success' :
+                                            attempt.status === 'IN_PROGRESS' ? 'primary' :
+                                            'secondary' %>">
+                                            <%= attempt.status %>
+                                        </span>
+                                    </div>
+                                </a>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Add SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+async function releaseResults(examId) {
+    try {
+        const response = await fetch(`/exams/${examId}/release-results`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Results have been released successfully',
+                showConfirmButton: true,
+                timer: 3000,
+                timerProgressBar: true
+            }).then(() => {
+                // Reload the page to reflect the changes
+                window.location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to release results');
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to release results'
+        });
+    }
+}
+</script>

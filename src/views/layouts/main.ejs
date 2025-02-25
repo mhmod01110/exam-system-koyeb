@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title + ' - ' : '' %>نظام الاختبارات
+    </title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.png">
+    <!-- CSRF Token -->
+    <% if (typeof csrfToken !=='undefined' ) { %>
+        <meta name="csrf-token" content="<%= csrfToken %>">
+    <% } %>
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Arabic Font (Tajawal) -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/attempt.css">
+    
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .alert {
+            text-align: right;
+        }
+        
+        .btn-close {
+            margin-right: auto;
+            margin-left: unset;
+        }
+        
+        .me-2 {
+            margin-left: 0.5rem !important;
+            margin-right: 0 !important;
+        }
+        
+        .ms-2 {
+            margin-right: 0.5rem !important;
+            margin-left: 0 !important;
+        }
+        
+        .dropdown-menu {
+            text-align: right;
+        }
+    </style>
+    
+    <%- defineContent('style') %>
+</head>
+
+<body>
+    <%- include('../partials/header') %>
+
+    <main class="container mt-4">
+        <!-- Flash Messages -->
+        <% if (messages && messages.error && messages.error.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle ms-2"></i>
+                <%= messages.error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+            </div>
+        <% } %>
+
+        <% if (messages && messages.success && messages.success.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle ms-2"></i>
+                <%= messages.success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+            </div>
+        <% } %>
+
+        <% if (messages && messages.info && messages.info.length > 0) { %>
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle ms-2"></i>
+                <%= messages.info %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+            </div>
+        <% } %>
+
+        <!-- Main Content -->
+        <%- defineContent('body') %>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery (if needed) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- CSRF Protection for AJAX requests -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Add CSRF token to all AJAX requests
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            if (token) {
+                document.addEventListener('submit', function (e) {
+                    if (e.target.method === 'POST') {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = '_csrf';
+                        hiddenInput.value = token;
+                        e.target.appendChild(hiddenInput);
+                    }
+                });
+
+                // Add CSRF token to fetch/axios requests
+                if (window.axios) {
+                    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+                }
+            }
+        });
+    </script>
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+    <%- defineContent('script') %>
+</body>
+</html>

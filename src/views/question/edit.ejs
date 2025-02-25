@@ -1,0 +1,455 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="card-title mb-4">Edit Question</h1>
+
+            <form action="/exams/<%= question.examId._id %>/questions/<%= question._id %>/edit" 
+                  method="POST" 
+                  enctype="multipart/form-data"
+                  class="needs-validation"
+                  novalidate>
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                
+                <!-- Question Type (readonly) -->
+                <div class="mb-4">
+                    <label for="type" class="form-label">Question Type</label>
+                    <input type="text" 
+                           class="form-control" 
+                           value="<%= question.type %>" 
+                           readonly>
+                    <input type="hidden" name="type" value="<%= question.type %>">
+                </div>
+
+                <!-- Question Text -->
+                <div class="mb-4">
+                    <label for="text" class="form-label">Question Text</label>
+                    <textarea name="text" 
+                             id="text" 
+                             class="form-control" 
+                             rows="3" 
+                             required
+                             minlength="10"><%= question.text %></textarea>
+                    <div class="invalid-feedback">
+                        Question text must be at least 10 characters long.
+                    </div>
+                </div>
+
+                <!-- Marks -->
+                <div class="mb-4">
+                    <label for="marks" class="form-label">Marks</label>
+                    <input type="number" 
+                           name="marks" 
+                           id="marks" 
+                           class="form-control" 
+                           value="<%= question.marks %>"
+                           required
+                           min="0"
+                           max="100">
+                    <div class="invalid-feedback">
+                        Marks must be between 0 and 100.
+                    </div>
+                </div>
+
+                <!-- MCQ Options -->
+                <% if (question.type === 'MCQ') { %>
+                    <div id="mcqOptions" class="mb-4">
+                        <label class="form-label">Options</label>
+                        <div id="optionsContainer">
+                            <% question.options.forEach((option, index) => { %>
+                                <div class="option-row mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" 
+                                                   name="correctOption" 
+                                                   value="<%= index %>"
+                                                   <%= option.isCorrect ? 'checked' : '' %>
+                                                   required>
+                                        </div>
+                                        <input type="text" 
+                                               name="options[]" 
+                                               class="form-control" 
+                                               value="<%= option.text %>"
+                                               required>
+                                        <button type="button" 
+                                                class="btn btn-danger remove-option"
+                                                <%= question.options.length <= 2 ? 'disabled' : '' %>>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <button type="button" 
+                                class="btn btn-secondary mt-2" 
+                                id="addOption">
+                            <i class="fas fa-plus"></i> Add Option
+                        </button>
+                        <div class="form-text text-danger">
+                            * At least 2 options are required. Select the correct answer using the radio button.
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const form = document.querySelector('form');
+                            const optionsContainer = document.getElementById('optionsContainer');
+                            const addOptionBtn = document.getElementById('addOption');
+
+                            // Add new option
+                            addOptionBtn.addEventListener('click', function() {
+                                const optionCount = optionsContainer.children.length;
+                                const newOption = document.createElement('div');
+                                newOption.className = 'option-row mb-2';
+                                newOption.innerHTML = `
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" 
+                                                   name="correctOption" 
+                                                   value="${optionCount}"
+                                                   required>
+                                        </div>
+                                        <input type="text" 
+                                               name="options[]" 
+                                               class="form-control"
+                                               placeholder="Option ${optionCount + 1}"
+                                               required>
+                                        <button type="button" 
+                                                class="btn btn-danger remove-option">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                `;
+                                optionsContainer.appendChild(newOption);
+                                updateRemoveButtons();
+                            });
+
+                            // Remove option
+                            optionsContainer.addEventListener('click', function(e) {
+                                if (e.target.closest('.remove-option')) {
+                                    const optionRow = e.target.closest('.option-row');
+                                    if (optionsContainer.children.length > 2) {
+                                        optionRow.remove();
+                                        // Update radio values
+                                        optionsContainer.querySelectorAll('[name="correctOption"]').forEach((radio, index) => {
+                                            radio.value = index;
+                                        });
+                                        updateRemoveButtons();
+                                    }
+                                }
+                            });
+
+                            // Update remove buttons state
+                            function updateRemoveButtons() {
+                                const removeButtons = optionsContainer.querySelectorAll('.remove-option');
+                                const disabled = optionsContainer.children.length <= 2;
+                                removeButtons.forEach(btn => btn.disabled = disabled);
+                            }
+
+                            // Form validation
+                            form.addEventListener('submit', function(e) {
+                                if (question.type === 'MCQ') {
+                                    const options = optionsContainer.querySelectorAll('input[name="options[]"]');
+                                    const correctOption = optionsContainer.querySelector('input[name="correctOption"]:checked');
+                                    
+                                    if (options.length < 2) {
+                                        e.preventDefault();
+                                        alert('MCQ questions must have at least 2 options');
+                                        return;
+                                    }
+                                    
+                                    if (!correctOption) {
+                                        e.preventDefault();
+                                        alert('Please select the correct answer');
+                                        return;
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                <% } %>
+
+                <!-- True/False Answer -->
+                <% if (question.type === 'TrueFalse') { %>
+                    <div id="trueFalseAnswer" class="mb-4">
+                        <label class="form-label">Correct Answer</label>
+                        <div class="form-check">
+                            <input type="radio" 
+                                   name="correctAnswer" 
+                                   value="true"
+                                   class="form-check-input"
+                                   <%= question.correctAnswer === 'true' ? 'checked' : '' %>
+                                   required>
+                            <label class="form-check-label">True</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" 
+                                   name="correctAnswer" 
+                                   value="false"
+                                   class="form-check-input"
+                                   <%= question.correctAnswer === 'false' ? 'checked' : '' %>
+                                   required>
+                            <label class="form-check-label">False</label>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please select the correct answer.
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Short Answer -->
+                <% if (question.type === 'ShortAnswer') { %>
+                    <div id="shortAnswer" class="mb-4">
+                        <label for="correctAnswer" class="form-label">Correct Answer</label>
+                        <input type="text" 
+                               name="correctAnswer" 
+                               id="correctAnswer" 
+                               class="form-control"
+                               value="<%= question.correctAnswer %>">
+                        <div class="form-text">
+                            For short answer questions, provide the expected answer.
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Explanation -->
+                <div class="mb-4">
+                    <label for="explanation" class="form-label">Explanation</label>
+                    <textarea name="explanation" 
+                             id="explanation" 
+                             class="form-control" 
+                             rows="3"><%= question.explanation %></textarea>
+                    <div class="form-text">
+                        Provide an explanation for the correct answer (optional).
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="mb-4">
+                    <label for="difficulty" class="form-label">Difficulty Level</label>
+                    <select name="difficulty" id="difficulty" class="form-select">
+                        <option value="Easy" <%= question.difficulty === 'Easy' ? 'selected' : '' %>>Easy</option>
+                        <option value="Medium" <%= question.difficulty === 'Medium' ? 'selected' : '' %>>Medium</option>
+                        <option value="Hard" <%= question.difficulty === 'Hard' ? 'selected' : '' %>>Hard</option>
+                    </select>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-4">
+                    <label for="tags" class="form-label">Tags</label>
+                    <input type="text" 
+                           name="tags" 
+                           id="tags" 
+                           class="form-control"
+                           value="<%= question.tags.join(', ') %>"
+                           placeholder="Enter tags separated by commas">
+                    <div class="form-text">
+                        Add tags to help organize questions (optional).
+                    </div>
+                </div>
+
+                <!-- Existing Images -->
+                <% if (question.images && question.images.length > 0) { %>
+                    <div class="mb-4">
+                        <label class="form-label">Existing Images</label>
+                        <div class="row">
+                            <% question.images.forEach((image, index) => { %>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <img src="<%= image.url %>" 
+                                             class="card-img-top" 
+                                             alt="Question image">
+                                        <div class="card-body">
+                                            <input type="text" 
+                                                   name="existingImageCaptions[<%= index %>]" 
+                                                   class="form-control mb-2"
+                                                   value="<%= image.caption %>"
+                                                   placeholder="Image caption">
+                                            <div class="form-check">
+                                                <input type="checkbox" 
+                                                       name="deleteImages[]" 
+                                                       value="<%= index %>"
+                                                       class="form-check-input">
+                                                <label class="form-check-label">Delete this image</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- New Images -->
+                <div class="mb-4">
+                    <label for="images" class="form-label">Add New Images</label>
+                    <div id="imageContainer">
+                        <div class="image-row mb-2">
+                            <div class="input-group">
+                                <input type="file" 
+                                       name="images[]" 
+                                       class="form-control"
+                                       accept="image/*">
+                                <input type="text" 
+                                       name="captions[]" 
+                                       class="form-control"
+                                       placeholder="Image caption (optional)">
+                                <button type="button" 
+                                        class="btn btn-danger remove-image"
+                                        disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" 
+                            class="btn btn-secondary mt-2" 
+                            id="addImage">
+                        <i class="fas fa-plus"></i> Add Image
+                    </button>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="/exams/<%= question.examId._id %>/questions" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Questions
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Handling Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const addOptionBtn = document.getElementById('addOption');
+        const imageContainer = document.getElementById('imageContainer');
+        const addImageBtn = document.getElementById('addImage');
+        
+        // Add MCQ option
+        if (addOptionBtn) {
+            addOptionBtn.addEventListener('click', function() {
+                const optionCount = optionsContainer.children.length;
+                const optionRow = document.createElement('div');
+                optionRow.className = 'option-row mb-2';
+                optionRow.innerHTML = `
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input type="radio" 
+                                   name="correctOption" 
+                                   value="${optionCount}"
+                                   required>
+                        </div>
+                        <input type="text" 
+                               name="options[]" 
+                               class="form-control" 
+                               placeholder="Option ${optionCount + 1}"
+                               required>
+                        <button type="button" 
+                                class="btn btn-danger remove-option">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                optionsContainer.appendChild(optionRow);
+                
+                // Enable/disable remove buttons
+                updateRemoveButtons();
+            });
+            
+            // Remove MCQ option
+            optionsContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-option')) {
+                    const optionRow = e.target.closest('.option-row');
+                    if (optionsContainer.children.length > 2) {
+                        optionRow.remove();
+                        // Update radio values
+                        optionsContainer.querySelectorAll('[name="correctOption"]').forEach((radio, index) => {
+                            radio.value = index;
+                        });
+                        updateRemoveButtons();
+                    }
+                }
+            });
+        }
+        
+        // Add image field
+        addImageBtn.addEventListener('click', function() {
+            const imageRow = document.createElement('div');
+            imageRow.className = 'image-row mb-2';
+            imageRow.innerHTML = `
+                <div class="input-group">
+                    <input type="file" 
+                           name="images[]" 
+                           class="form-control"
+                           accept="image/*">
+                    <input type="text" 
+                           name="captions[]" 
+                           class="form-control"
+                           placeholder="Image caption (optional)">
+                    <button type="button" 
+                            class="btn btn-danger remove-image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            imageContainer.appendChild(imageRow);
+            
+            // Enable/disable remove buttons
+            updateRemoveImageButtons();
+        });
+        
+        // Remove image field
+        imageContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-image') || 
+                e.target.closest('.remove-image')) {
+                e.target.closest('.image-row').remove();
+                updateRemoveImageButtons();
+            }
+        });
+        
+        // Update remove buttons state
+        function updateRemoveButtons() {
+            const removeButtons = optionsContainer.querySelectorAll('.remove-option');
+            const disabled = optionsContainer.children.length <= 2;
+            removeButtons.forEach(btn => btn.disabled = disabled);
+        }
+        
+        // Update remove image buttons state
+        function updateRemoveImageButtons() {
+            const removeButtons = imageContainer.querySelectorAll('.remove-image');
+            removeButtons.forEach(button => {
+                button.disabled = imageContainer.children.length <= 1;
+            });
+        }
+        
+        // Form validation
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Additional validation for MCQ questions
+            if (optionsContainer) {
+                const options = optionsContainer.querySelectorAll('.option-row');
+                const correctOption = optionsContainer.querySelector('input[name="correctOption"]:checked');
+                
+                if (options.length < 2 || !correctOption) {
+                    e.preventDefault();
+                    document.getElementById('mcqOptions')
+                            .querySelector('.invalid-feedback')
+                            .style.display = 'block';
+                }
+            }
+            
+            form.classList.add('was-validated');
+        });
+    });
+</script>

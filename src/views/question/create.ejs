@@ -1,0 +1,429 @@
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Create New Question</h3>
+                <a href="/exams/<%= exam._id %>/questions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Questions
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="/exams/<%= exam._id %>/questions/create" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <!-- Question Type -->
+                <div class="mb-4">
+                    <label for="type" class="form-label">Question Type</label>
+                    <select name="type" id="type" class="form-select" required>
+                        <option value="">Select Type</option>
+                        <option value="MCQ">Multiple Choice</option>
+                        <option value="TrueFalse">True/False</option>
+                        <!-- <option value="ShortAnswer">Short Answer</option>
+                        <option value="Essay">Essay</option> -->
+                    </select>
+                    <div class="invalid-feedback">
+                        Please select a question type.
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <div class="mb-4">
+                    <label for="text" class="form-label">Question Text</label>
+                    <textarea name="text" 
+                             id="text" 
+                             class="form-control" 
+                             rows="3" 
+                             required
+                             minlength="10"></textarea>
+                    <div class="invalid-feedback">
+                        Question text must be at least 10 characters long.
+                    </div>
+                </div>
+
+                <!-- Marks -->
+                <div class="mb-4">
+                    <label for="marks" class="form-label">Marks</label>
+                    <input type="number" 
+                           name="marks" 
+                           id="marks" 
+                           class="form-control" 
+                           required
+                           min="0"
+                           max="100">
+                    <div class="invalid-feedback">
+                        Marks must be between 0 and 100.
+                    </div>
+                </div>
+
+                <!-- Dynamic Options Section -->
+                <div id="optionsSection"></div>
+
+                <!-- Explanation -->
+                <div class="mb-4">
+                    <label for="explanation" class="form-label">Explanation</label>
+                    <textarea name="explanation" 
+                             id="explanation" 
+                             class="form-control" 
+                             rows="3"></textarea>
+                    <div class="form-text">
+                        Provide an explanation for the correct answer (optional).
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="mb-4">
+                    <label for="difficulty" class="form-label">Difficulty Level</label>
+                    <select name="difficulty" id="difficulty" class="form-select" required>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-4">
+                    <label for="tags" class="form-label">Tags</label>
+                    <input type="text" 
+                           name="tags" 
+                           id="tags" 
+                           class="form-control"
+                           placeholder="Enter tags separated by commas">
+                    <div class="form-text">
+                        Add tags to help organize questions (optional).
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <!-- <div class="mb-4">
+                    <label class="form-label">Images (Optional)</label>
+                    <div id="imageContainer">
+                        <div class="image-row mb-2">
+                            <div class="input-group">
+                                <input type="file" 
+                                       class="form-control image-file"
+                                       accept="image/*"
+                                       onchange="handleImageSelect(this)">
+                                <input type="text" 
+                                       class="form-control image-caption"
+                                       placeholder="Image caption (optional)">
+                                <button type="button" 
+                                        class="btn btn-danger remove-image"
+                                        disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div> 
+                    <div id="imageDataContainer"></div>
+                    <button type="button" 
+                            class="btn btn-secondary mt-2" 
+                            id="addImage">
+                        <i class="fas fa-plus"></i> Add Image
+                    </button>
+                </div> -->
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Question
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    const typeSelect = document.getElementById('type');
+    const optionsSection = document.getElementById('optionsSection');
+    // const imageContainer = document.getElementById('imageContainer');
+    // const addImageBtn = document.getElementById('addImage');
+    // const imageDataContainer = document.getElementById('imageDataContainer');
+
+    // Enhanced form validation
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Always prevent default first
+        
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return false;
+        }
+
+        // Additional validation for MCQ questions
+        if (typeSelect.value === 'MCQ') {
+            const correctAnswers = Array.from(document.querySelectorAll('.is-correct-input'))
+                .filter(input => input.value === "true");
+            
+            if (correctAnswers.length !== 1) {
+                alert('Please select exactly one correct answer for the MCQ question.');
+                return false;
+            }
+        }
+
+        /* // Process images before submission
+        const imageRows = imageContainer.querySelectorAll('.image-row');
+        imageDataContainer.innerHTML = ''; // Clear previous data
+        
+        // Counter for valid images
+        let validImageCount = 0;
+        
+        imageRows.forEach((row, index) => {
+            const fileInput = row.querySelector('.image-file');
+            const caption = row.querySelector('.image-caption').value;
+            
+            // Only add if there's an image selected
+            if (fileInput.files && fileInput.files[0] && fileInput.dataset.imageData) {
+                // Create hidden inputs for this image
+                const urlInput = document.createElement('input');
+                urlInput.type = 'hidden';
+                urlInput.name = `images[${validImageCount}][url]`;
+                urlInput.value = fileInput.dataset.imageData;
+                
+                const captionInput = document.createElement('input');
+                captionInput.type = 'hidden';
+                captionInput.name = `images[${validImageCount}][caption]`;
+                captionInput.value = caption || '';
+                
+                imageDataContainer.appendChild(urlInput);
+                imageDataContainer.appendChild(captionInput);
+                
+                validImageCount++;
+            }
+        }); */
+
+        form.classList.add('was-validated');
+        
+        // If we got here, all validations passed
+        form.submit();
+    });
+
+    /* // Function to handle image selection
+    function handleImageSelect(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                input.dataset.imageData = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Update the addImage function
+    addImageBtn.addEventListener('click', function() {
+        const imageRow = document.createElement('div');
+        imageRow.className = 'image-row mb-2';
+        imageRow.innerHTML = `
+            <div class="input-group">
+                <input type="file" 
+                       class="form-control image-file"
+                       accept="image/*"
+                       onchange="handleImageSelect(this)">
+                <input type="text" 
+                       class="form-control image-caption"
+                       placeholder="Image caption (optional)">
+                <button type="button" class="btn btn-danger remove-image">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        imageContainer.appendChild(imageRow);
+        updateRemoveImageButtons();
+    });
+
+    // Update remove image handler
+    imageContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-image') || 
+            e.target.closest('.remove-image')) {
+            const row = e.target.closest('.image-row');
+            row.remove();
+            updateRemoveImageButtons();
+        }
+    });
+
+    // Update remove image buttons state
+    function updateRemoveImageButtons() {
+        const removeButtons = imageContainer.querySelectorAll('.remove-image');
+        removeButtons.forEach(button => {
+            button.disabled = imageContainer.children.length <= 1;
+        });
+    } */
+
+    // Question type change handler
+    typeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        switch(selectedType) {
+            case 'MCQ':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label class="form-label">Options</label>
+                        <div id="mcqOptions">
+                            <!-- Options will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary mt-2" id="addOption">
+                            <i class="fas fa-plus"></i> Add Option
+                        </button>
+                        <div class="form-text text-danger">
+                            * At least 2 options are required. Select the correct answer using the radio button.
+                        </div>
+                    </div>
+                `;
+                createMCQSection();
+                break;
+
+            case 'TrueFalse':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label class="form-label">Correct Answer</label>
+                        <div class="form-check mb-2">
+                            <input type="radio" name="correctAnswer" value="true" class="form-check-input" id="answerTrue" required>
+                            <label class="form-check-label" for="answerTrue">True</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" name="correctAnswer" value="false" class="form-check-input" id="answerFalse" required>
+                            <label class="form-check-label" for="answerFalse">False</label>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please select the correct answer.
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'ShortAnswer':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label for="correctAnswer" class="form-label">Correct Answer</label>
+                        <input type="text" 
+                               name="correctAnswer" 
+                               id="correctAnswer" 
+                               class="form-control"
+                               required
+                               placeholder="Enter the expected answer">
+                        <div class="invalid-feedback">
+                            Please provide the correct answer.
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'Essay':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label for="modelAnswer" class="form-label">Model Answer</label>
+                        <textarea name="modelAnswer" 
+                                 id="modelAnswer" 
+                                 class="form-control"
+                                 rows="4"
+                                 placeholder="Enter a model answer for grading reference"></textarea>
+                        <div class="form-text">
+                            Provide a model answer to help with grading (optional).
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            default:
+                optionsSection.innerHTML = '';
+        }
+    });
+
+    // Function to create MCQ options section
+    function createMCQSection() {
+        const mcqOptions = document.getElementById('mcqOptions');
+        const addOptionBtn = document.getElementById('addOption');
+
+        // Function to add new option
+        function addOption() {
+            const optionCount = mcqOptions.children.length;
+            const newOption = document.createElement('div');
+            newOption.className = 'option-row mb-2';
+            newOption.innerHTML = `
+                <div class="input-group">
+                    <div class="input-group-text">
+                        <input type="radio" 
+                               name="correctOption" 
+                               value="${optionCount}"
+                               required
+                               onchange="updateCorrectOption(this, ${optionCount})">
+                    </div>
+                    <input type="text" 
+                           name="options[${optionCount}][text]" 
+                           class="form-control"
+                           placeholder="Option ${optionCount + 1}"
+                           required>
+                    <input type="hidden" 
+                           name="options[${optionCount}][isCorrect]" 
+                           value="false"
+                           class="is-correct-input">
+                    <button type="button" 
+                            class="btn btn-danger remove-option"
+                            ${optionCount < 2 ? 'disabled' : ''}>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            mcqOptions.appendChild(newOption);
+            updateRemoveButtons();
+        }
+
+        // Function to update isCorrect values
+        window.updateCorrectOption = function(radio, selectedIndex) {
+            if (!radio.checked) return;
+            
+            // Set all options to false first
+            const allHiddenInputs = mcqOptions.querySelectorAll('.is-correct-input');
+            allHiddenInputs.forEach(input => input.value = "false");
+            
+            // Set the selected option to true
+            const selectedHiddenInput = mcqOptions.querySelector(`input[name="options[${selectedIndex}][isCorrect]"]`);
+            if (selectedHiddenInput) {
+                selectedHiddenInput.value = "true";
+                console.log('Set option', selectedIndex, 'as correct answer');
+            }
+        };
+
+        // Function to update remove buttons state
+        function updateRemoveButtons() {
+            const removeButtons = mcqOptions.querySelectorAll('.remove-option');
+            removeButtons.forEach(btn => {
+                btn.disabled = mcqOptions.children.length <= 2;
+            });
+        }
+
+        // Add initial two options
+        addOption();
+        addOption();
+
+        // Add option button click handler
+        addOptionBtn.addEventListener('click', addOption);
+
+        // Remove option button click handler
+        mcqOptions.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-option')) {
+                const optionRow = e.target.closest('.option-row');
+                if (mcqOptions.children.length > 2) {
+                    optionRow.remove();
+                    // Reindex the remaining options
+                    mcqOptions.querySelectorAll('.option-row').forEach((row, index) => {
+                        const radio = row.querySelector('input[type="radio"]');
+                        const textInput = row.querySelector('input[type="text"]');
+                        const isCorrectInput = row.querySelector('.is-correct-input');
+                        
+                        radio.value = index;
+                        textInput.name = `options[${index}][text]`;
+                        textInput.placeholder = `Option ${index + 1}`;
+                        isCorrectInput.name = `options[${index}][isCorrect]`;
+                    });
+                    updateRemoveButtons();
+                }
+            }
+        });
+    }
+});
+</script>

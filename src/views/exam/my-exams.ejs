@@ -1,0 +1,187 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Exams</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="UPCOMING">Upcoming</option>
+                        <option value="AVAILABLE">Available Now</option>
+                        <option value="COMPLETED">Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="MCQ">Multiple Choice</option>
+                        <option value="PROJECT">Project</option>
+                        <option value="MIXED">Mixed</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-secondary w-100" id="resetFilters">
+                        <i class="fas fa-sync"></i> Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group exams by department -->
+    <% 
+        // Group exams by department
+        const departmentExams = {};
+        exams.forEach(exam => {
+            const dept = exam.department ? exam.department.name : 'Other';
+            if (!departmentExams[dept]) {
+                departmentExams[dept] = [];
+            }
+            departmentExams[dept].push(exam);
+        });
+    %>
+
+    <!-- Exams List -->
+    <% if (exams.length === 0) { %>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No exams available.
+        </div>
+    <% } else { %>
+        <div class="accordion" id="departmentAccordion">
+            <% Object.entries(departmentExams).forEach(([department, deptExams], index) => { %>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading<%= index %>">
+                        <button class="accordion-button <%= index === 0 ? '' : 'collapsed' %>" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#collapse<%= index %>" 
+                                aria-expanded="<%= index === 0 ? 'true' : 'false' %>" 
+                                aria-controls="collapse<%= index %>">
+                            <%= department %>
+                            <span class="badge bg-primary ms-2">
+                                <%= deptExams.length %> Exams
+                            </span>
+                        </button>
+                    </h2>
+                    <div id="collapse<%= index %>" 
+                         class="accordion-collapse collapse <%= index === 0 ? 'show' : '' %>" 
+                         aria-labelledby="heading<%= index %>" 
+                         data-bs-parent="#departmentAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <% deptExams.forEach(exam => { %>
+                                    <div class="col-md-6 mb-4 exam-card" 
+                                         data-status="<%= new Date() < new Date(exam.startDate) ? 'UPCOMING' : 
+                                                       new Date() > new Date(exam.endDate) ? 'COMPLETED' : 
+                                                       'AVAILABLE' %>"
+                                         data-type="<%= exam.type %>">
+                                        <div class="card h-100" style="<%= exam.type === 'PROJECT' ? 'background-color: #e3f2fd; border-color: #90caf9;' : '' %>">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <h5 class="card-title mb-0">
+                                                        <% if (exam.type === 'PROJECT') { %>
+                                                            <i class="fas fa-project-diagram text-primary me-2"></i>
+                                                        <% } %>
+                                                        <%= exam.title %>
+                                                    </h5>
+                                                    <span class="badge bg-<%= 
+                                                        new Date() < new Date(exam.startDate) ? 'warning' : 
+                                                        new Date() > new Date(exam.endDate) ? 'secondary' : 
+                                                        'success' %>">
+                                                        <%= new Date() < new Date(exam.startDate) ? 'Upcoming' : 
+                                                            new Date() > new Date(exam.endDate) ? 'Completed' : 
+                                                            'Available' %>
+                                                    </span>
+                                                </div>
+
+                                                <p class="card-text text-muted mb-3">
+                                                    <%= exam.description || 'No description provided' %>
+                                                </p>
+
+                                                <div class="mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-clock"></i> Duration: <%= exam.duration %> minutes<br>
+                                                        <i class="fas fa-calendar-alt"></i> Start: <%= new Date(exam.startDate).toLocaleString() %><br>
+                                                        <i class="fas fa-calendar-times"></i> End: <%= new Date(exam.endDate).toLocaleString() %><br>
+                                                        <i class="fas fa-star"></i> Total Marks: <%= exam.totalMarks %><br>
+                                                        <i class="fas fa-check-circle"></i> Passing Marks: <%= exam.passingMarks %>
+                                                    </small>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge <%= exam.type === 'PROJECT' ? 'bg-primary' : 'bg-info' %> me-1">
+                                                            <%= exam.type %>
+                                                        </span>
+                                                        <small class="text-muted">by: "<%= exam.createdBy.name.toUpperCase() %>"</small>
+                                                    </div>
+                                                    <% if (new Date() >= new Date(exam.startDate) && new Date() <= new Date(exam.endDate)) { %>
+                                                        <a href="/exams/<%= exam._id %>" class="btn <%= exam.type === 'PROJECT' ? 'btn-primary' : 'btn-info' %>">
+                                                            <i class="fas fa-<%= exam.type === 'PROJECT' ? 'upload' : 'play' %>"></i> 
+                                                            <%= exam.type === 'PROJECT' ? 'Submit Project' : 'Start Exam' %>
+                                                        </a>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<!-- Filtering Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const resetButton = document.getElementById('resetFilters');
+    const examCards = document.querySelectorAll('.exam-card');
+    
+    function applyFilters() {
+        const status = statusFilter.value;
+        const type = typeFilter.value;
+        
+        examCards.forEach(card => {
+            const statusMatch = !status || card.dataset.status === status;
+            const typeMatch = !type || card.dataset.type === type;
+            
+            card.style.display = statusMatch && typeMatch ? '' : 'none';
+        });
+
+        // Update empty department sections
+        document.querySelectorAll('.accordion-body').forEach(body => {
+            const visibleCards = body.querySelectorAll('.exam-card[style=""]').length;
+            const accordionItem = body.closest('.accordion-item');
+            if (visibleCards === 0) {
+                accordionItem.style.display = 'none';
+            } else {
+                accordionItem.style.display = '';
+            }
+        });
+    }
+    
+    statusFilter.addEventListener('change', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+    
+    resetButton.addEventListener('click', function() {
+        statusFilter.value = '';
+        typeFilter.value = '';
+        examCards.forEach(card => card.style.display = '');
+        document.querySelectorAll('.accordion-item').forEach(item => {
+            item.style.display = '';
+        });
+    });
+});
+</script> 

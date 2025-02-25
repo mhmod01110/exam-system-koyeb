@@ -1,0 +1,109 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="mb-4">اتصل بنا</h1>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                <h5>البريد الإلكتروني</h5>
+                                <p>mhmod.mhmod01110@gmail.com</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                                <h5>الهاتف</h5>
+                                <p>٢٠١٠١٢٤٨٢١٠٧+</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
+                                <h5>العنوان</h5>
+                                <p>مصر، القاهرة</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h3 class="mb-4">أرسل لنا رسالة</h3>
+                            <form id="contactForm" class="needs-validation" novalidate>
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">الاسم</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                    <div class="invalid-feedback">
+                                        يرجى إدخال اسمك
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="invalid-feedback">
+                                        يرجى إدخال بريد إلكتروني صحيح
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">الموضوع</label>
+                                    <select class="form-select" id="subject" name="subject" required>
+                                        <option value="">اختر موضوعاً...</option>
+                                        <option value="general">استفسار عام</option>
+                                        <option value="technical">دعم فني</option>
+                                        <option value="billing">استفسار عن الدفع</option>
+                                        <option value="feedback">اقتراحات وملاحظات</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        يرجى اختيار موضوع
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">الرسالة</label>
+                                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                                    <div class="invalid-feedback">
+                                        يرجى كتابة رسالتك
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane ms-2"></i>إرسال الرسالة
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3>ساعات العمل</h3>
+                        <p>
+                            <strong>الإثنين - الجمعة:</strong> ٩:٠٠ ص - ٦:٠٠ م<br>
+                            <strong>السبت:</strong> ١٠:٠٠ ص - ٢:٠٠ م<br>
+                            <strong>الأحد:</strong> مغلق
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('contactForm');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script> 

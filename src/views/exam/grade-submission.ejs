@@ -1,0 +1,161 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Grade Submission</h3>
+                <a href="/exams/<%= submission.examId._id %>/submissions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Submissions
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Student Information -->
+            <div class="mb-4">
+                <h5>Student Information</h5>
+                <p class="mb-1">
+                    <strong>Name:</strong> <%= submission.studentId.firstName %> <%= submission.studentId.lastName %>
+                </p>
+                <p class="mb-1">
+                    <strong>Email:</strong> <%= submission.studentId.email %>
+                </p>
+                <p class="mb-0">
+                    <strong>Submission Date:</strong> 
+                    <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %>
+                </p>
+            </div>
+
+            <!-- Project File -->
+            <div class="mb-4">
+                <h5>Submitted Project</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>File Name:</strong> <%= submission.projectSubmission.fileName %>
+                        </p>
+                        <p class="mb-2">
+                            <strong>File Type:</strong> <%= submission.projectSubmission.fileType %>
+                        </p>
+                        <div class="mb-3">
+                            <a href="<%= submission.projectSubmission.fileUrl %>" 
+                               target="_blank" 
+                               class="btn btn-primary">
+                                <i class="fas fa-download"></i> Download Project
+                            </a>
+                        </div>
+                        
+                        <!-- File Preview -->
+                        <% if (submission.projectSubmission.fileType.startsWith('image/')) { %>
+                            <div class="mt-3">
+                                <h6>Preview:</h6>
+                                <img src="<%= submission.projectSubmission.fileUrl %>" 
+                                     alt="Project Preview" 
+                                     class="img-fluid" 
+                                     style="max-height: 300px;">
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grading Form -->
+            <div class="mb-4">
+                <h5>Grade Submission</h5>
+                <form id="gradeForm" class="needs-validation" novalidate>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
+                    <div class="mb-3">
+                        <label for="marks" class="form-label">Marks (out of <%= submission.examId.projectTotalMarks %>)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="marks" 
+                               name="marks" 
+                               min="0" 
+                               max="<%= submission.examId.projectTotalMarks %>"
+                               required
+                               <% if (submission.status === 'GRADED') { %>
+                                   value="<%= submission.projectSubmission.marksObtained %>"
+                               <% } %>>
+                        <div class="invalid-feedback">
+                            Please enter valid marks between 0 and <%= submission.examId.projectTotalMarks %>.
+                        </div>
+                        <div class="form-text">
+                            Enter marks between 0 and <%= submission.examId.projectTotalMarks %>. Passing mark is <%= Math.ceil(submission.examId.projectTotalMarks * 0.5) %>.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedback" class="form-label">Feedback</label>
+                        <textarea class="form-control" 
+                                  id="feedback" 
+                                  name="feedback" 
+                                  rows="4"
+                                  required><%= submission.projectSubmission.feedback ? submission.projectSubmission.feedback.text : '' %></textarea>
+                        <div class="invalid-feedback">
+                            Please provide feedback for the student.
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Submit Grade
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grading Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('gradeForm');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!form.checkValidity()) {
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        try {
+            const response = await fetch('/exams/submissions/<%= submission._id %>/grade-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'CSRF-Token': '<%= csrfToken %>'
+                },
+                body: JSON.stringify({
+                    marks: Number(document.getElementById('marks').value),
+                    feedback: document.getElementById('feedback').value
+                })
+            });
+
+            if (!response.ok) {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error grading project');
+                } else {
+                    throw new Error('Server error occurred');
+                }
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Project graded successfully');
+                window.location.href = '/exams/<%= submission.examId._id %>/submissions';
+            } else {
+                throw new Error(data.error || 'Error grading project');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message || 'Error grading project');
+        }
+    });
+});</script> 

@@ -1,0 +1,398 @@
+<div class="container mt-5">
+    <% if (!user) { %>
+        <!-- Guest View -->
+        <div class="text-center">
+            <h1 class="display-4 mb-4">مرحباً بك في نظام الاختبارات عبر الإنترنت</h1>
+            <p class="lead mb-4">منصة شاملة للاختبارات والتقييمات عبر الإنترنت</p>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="d-grid gap-3">
+                        <a href="/auth/login" class="btn btn-primary btn-lg">تسجيل الدخول</a>
+                        <a href="/auth/register" class="btn btn-outline-primary btn-lg">إنشاء حساب</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } else if (user.role === 'student') { %>
+        <!-- Student Dashboard -->
+        <div class="row">
+            <!-- Quick Actions -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">إجراءات سريعة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/exams" class="btn btn-primary">عرض الاختبارات المتاحة</a>
+                            <a href="/profile" class="btn btn-outline-primary">الملف الشخصي</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Exams -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">الاختبارات القادمة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <% if (typeof upcomingExams !== 'undefined' && upcomingExams.length > 0) { %>
+                                <% upcomingExams.forEach(exam => { %>
+                                    <a href="/exams/<%= exam._id %>" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1"><%= exam.title %></h6>
+                                            <small><%= new Date(exam.startTime).toLocaleDateString('ar-EG') %></small>
+                                        </div>
+                                        <small class="text-muted">المدة: <%= exam.duration %> دقيقة</small>
+                                    </a>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-muted mb-0">لا توجد اختبارات قادمة</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Results -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">النتائج الأخيرة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <% if (typeof recentResults !== 'undefined' && recentResults.length > 0) { %>
+                                <% recentResults.forEach(result => { %>
+                                    <% if (result.isReleased) { %>
+                                        <a href="/exams/<%= result.examId._id %>/results/<%= result._id.toString() %>" 
+                                           class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1"><%= result.examTitle %></h6>
+                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %> px-2">
+                                                    <%= result.percentage.toFixed(1) %>%
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">
+                                                <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
+                                            </small>
+                                        </a>
+                                    <% } else { %>
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1"><%= result.examTitle %></h6>
+                                                <span class="badge bg-secondary">في انتظار النتيجة</span>
+                                            </div>
+                                            <small class="text-muted">
+                                                سيتم إعلان النتائج قريباً
+                                            </small>
+                                        </div>
+                                    <% } %>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-muted mb-0">لا توجد نتائج حديثة</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Departments Section -->
+            <div class="col-md-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">الأقسام</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <% departments.forEach(department => { %>
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="card-title mb-0"><%= department.name %></h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Action Buttons -->
+                                            <div class="mb-3">
+                                                <a href="/departments/<%= department._id %>/exams" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-book ms-1"></i> الاختبارات
+                                                </a>
+                                                <a href="/departments/<%= department._id %>/materials" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-file-alt ms-1"></i> المواد
+                                                </a>
+                                                <% if (user.role === 'admin') { %>
+                                                    <a href="/departments/<%= department._id %>/edit" class="btn btn-sm btn-warning">
+                                                        <i class="fas fa-edit ms-1"></i> تعديل
+                                                    </a>
+                                                <% } %>
+                                            </div>
+                                            <!-- Exams -->
+                                            <h6 class="mb-3">الاختبارات</h6>
+                                            <% if (department.exams && department.exams.length > 0) { %>
+                                                <div class="list-group mb-3">
+                                                    <% department.exams.slice(0, 3).forEach(exam => { %>
+                                                        <a href="/exams/<%= exam._id %>" class="list-group-item list-group-item-action">
+                                                            <%= exam.title %>
+                                                        </a>
+                                                    <% }); %>
+                                                    <% if (department.exams.length > 3) { %>
+                                                        <a href="/departments/<%= department._id %>/exams" class="list-group-item list-group-item-action text-primary">
+                                                            عرض جميع الاختبارات...
+                                                        </a>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <p class="text-muted small">لا توجد اختبارات متاحة</p>
+                                            <% } %>
+
+                                            <!-- Materials -->
+                                            <h6 class="mb-3">المواد الدراسية</h6>
+                                            <% if (department.materials && department.materials.length > 0) { %>
+                                                <div class="list-group">
+                                                    <% if (user.role === 'student') { %>
+                                                        <div class="alert alert-info py-2 mb-2 small">
+                                                            <i class="fas fa-info-circle ms-1"></i>
+                                                            مستواك: <strong><%= department.studentLevel %></strong>
+                                                        </div>
+                                                        <a href="/departments/<%= department._id %>/materials" 
+                                                           class="list-group-item list-group-item-action text-primary">
+                                                            <i class="fas fa-book-reader ms-1"></i>
+                                                            عرض مواد المستوى <%= department.studentLevel %>
+                                                        </a>
+                                                    <% } else { %>
+                                                        <% department.materials.slice(0, 3).forEach(material => { %>
+                                                            <a href="<%= material.url %>" target="_blank" 
+                                                               class="list-group-item list-group-item-action <%= 
+                                                                    material.level === 'Beginner' ? 'border-success' : 
+                                                                    material.level === 'Normal' ? 'border-primary' : 'border-danger' %> border-2">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span><%= material.title %></span>
+                                                                    <span class="badge <%= 
+                                                                        material.level === 'Beginner' ? 'bg-success' : 
+                                                                        material.level === 'Normal' ? 'bg-primary' : 'bg-danger' %>">
+                                                                        <%= material.level === 'Beginner' ? 'مبتدئ' : 
+                                                                            material.level === 'Normal' ? 'متوسط' : 'متقدم' %>
+                                                                    </span>
+                                                                </div>
+                                                            </a>
+                                                        <% }); %>
+                                                        <% if (department.materials.length > 3) { %>
+                                                            <a href="/departments/<%= department._id %>/materials" 
+                                                               class="list-group-item list-group-item-action text-primary">
+                                                                عرض جميع المواد...
+                                                            </a>
+                                                        <% } %>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <p class="text-muted small">لا توجد مواد متاحة</p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } else { %>
+        <!-- Teacher/Admin Dashboard -->
+        <div class="row">
+            <!-- Quick Actions -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">إجراءات سريعة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/exams/create" class="btn btn-primary">إنشاء اختبار جديد</a>
+                            <a href="/exams" class="btn btn-outline-primary">إدارة الاختبارات</a>
+                            <a href="/admin/users" class="btn btn-outline-primary">إدارة المستخدمين</a>
+                            <a href="/departments/create" class="btn btn-outline-primary">إنشاء قسم</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Exams -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">الاختبارات الأخيرة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <% if (typeof recentExams !== 'undefined' && recentExams.length > 0) { %>
+                                <% recentExams.forEach(exam => { %>
+                                    <a href="/exams/<%= exam._id %>" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1"><%= exam.title %></h6>
+                                            <small class="badge <%= 
+                                                exam.status === 'PUBLISHED' ? 'bg-success' : 
+                                                exam.status === 'DRAFT' ? 'bg-warning text-dark' : 
+                                                exam.status === 'ARCHIVED' ? 'bg-secondary' : 
+                                                'bg-primary' 
+                                            %>">
+                                                <%= exam.status === 'PUBLISHED' ? 'منشور' :
+                                                    exam.status === 'DRAFT' ? 'مسودة' :
+                                                    exam.status === 'ARCHIVED' ? 'مؤرشف' :
+                                                    exam.status %>
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">
+                                            الأسئلة: <%= exam.questions.length %> | 
+                                            التقديمات: <%= exam.submissions.length %>
+                                        </small>
+                                    </a>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-muted mb-0">لم يتم إنشاء اختبارات بعد</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">الإحصائيات</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                إجمالي الاختبارات
+                                <span class="badge bg-primary rounded-pill">
+                                    <%= typeof totalExams !== 'undefined' ? totalExams : 0 %>
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                إجمالي الأسئلة
+                                <span class="badge bg-primary rounded-pill">
+                                    <%= typeof totalQuestions !== 'undefined' ? totalQuestions : 0 %>
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                إجمالي التقديمات
+                                <span class="badge bg-primary rounded-pill">
+                                    <%= typeof totalSubmissions !== 'undefined' ? totalSubmissions : 0 %>
+                                </span>
+                            </li>
+                            <% if (user.role === 'admin') { %>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    إجمالي المستخدمين
+                                    <span class="badge bg-primary rounded-pill">
+                                        <%= typeof totalUsers !== 'undefined' ? totalUsers : 0 %>
+                                    </span>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Departments Section -->
+            <div class="col-md-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">الأقسام</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <% departments.forEach(department => { %>
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="card-title mb-0"><%= department.name %></h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Action Buttons -->
+                                            <div class="mb-3">
+                                                <a href="/departments/<%= department._id %>/exams" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-book ms-1"></i> الاختبارات
+                                                </a>
+                                                <a href="/departments/<%= department._id %>/materials" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-file-alt ms-1"></i> المواد
+                                                </a>
+                                                <a href="/departments/<%= department._id %>/edit" class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit ms-1"></i> تعديل
+                                                </a>
+                                            </div>
+                                            <!-- Exams -->
+                                            <h6 class="mb-3">الاختبارات</h6>
+                                            <% if (department.exams && department.exams.length > 0) { %>
+                                                <div class="list-group mb-3">
+                                                    <% department.exams.slice(0, 3).forEach(exam => { %>
+                                                        <a href="/exams/<%= exam._id %>" class="list-group-item list-group-item-action">
+                                                            <%= exam.title %>
+                                                        </a>
+                                                    <% }); %>
+                                                    <% if (department.exams.length > 3) { %>
+                                                        <a href="/departments/<%= department._id %>/exams" class="list-group-item list-group-item-action text-primary">
+                                                            عرض جميع الاختبارات...
+                                                        </a>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <p class="text-muted small">لا توجد اختبارات متاحة</p>
+                                            <% } %>
+
+                                            <!-- Materials -->
+                                            <h6 class="mb-3">المواد الدراسية</h6>
+                                            <% if (department.materials && department.materials.length > 0) { %>
+                                                <div class="list-group">
+                                                    <% if (user.role === 'student') { %>
+                                                        <div class="alert alert-info py-2 mb-2 small">
+                                                            <i class="fas fa-info-circle ms-1"></i>
+                                                            مستواك: <strong><%= department.studentLevel %></strong>
+                                                        </div>
+                                                        <a href="/departments/<%= department._id %>/materials" 
+                                                           class="list-group-item list-group-item-action text-primary">
+                                                            <i class="fas fa-book-reader ms-1"></i>
+                                                            عرض مواد المستوى <%= department.studentLevel %>
+                                                        </a>
+                                                    <% } else { %>
+                                                        <% department.materials.slice(0, 3).forEach(material => { %>
+                                                            <a href="<%= material.url %>" target="_blank" 
+                                                               class="list-group-item list-group-item-action <%= 
+                                                                    material.level === 'Beginner' ? 'border-success' : 
+                                                                    material.level === 'Normal' ? 'border-primary' : 'border-danger' %> border-2">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span><%= material.title %></span>
+                                                                    <span class="badge <%= 
+                                                                        material.level === 'Beginner' ? 'bg-success' : 
+                                                                        material.level === 'Normal' ? 'bg-primary' : 'bg-danger' %>">
+                                                                        <%= material.level === 'Beginner' ? 'مبتدئ' : 
+                                                                            material.level === 'Normal' ? 'متوسط' : 'متقدم' %>
+                                                                    </span>
+                                                                </div>
+                                                            </a>
+                                                        <% }); %>
+                                                        <% if (department.materials.length > 3) { %>
+                                                            <a href="/departments/<%= department._id %>/materials" 
+                                                               class="list-group-item list-group-item-action text-primary">
+                                                                عرض جميع المواد...
+                                                            </a>
+                                                        <% } %>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <p class="text-muted small">لا توجد مواد متاحة</p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>

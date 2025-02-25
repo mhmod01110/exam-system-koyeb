@@ -1,0 +1,41 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Select Number of Questions Per Type</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/<%= examId %>/questions/plan" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <div class="mb-3">
+                            <label for="mcqCount" class="form-label">Multiple Choice Questions</label>
+                            <input type="number" class="form-control" id="mcqCount" name="mcqCount" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="trueFalseCount" class="form-label">True/False Questions</label>
+                            <input type="number" class="form-control" id="trueFalseCount" name="trueFalseCount" min="0" value="0" required>
+                        </div>
+                        
+                        <!-- <div class="mb-3">
+                            <label for="shortAnswerCount" class="form-label">Short Answer Questions</label>
+                            <input type="number" class="form-control" id="shortAnswerCount" name="shortAnswerCount" min="0" value="0" required>
+                        </div> -->
+                        
+                        <!-- <div class="mb-3">
+                            <label for="longAnswerCount" class="form-label">Long Answer Questions</label>
+                            <input type="number" class="form-control" id="longAnswerCount" name="longAnswerCount" min="0" value="0" required>
+                        </div> -->
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Continue to Add Questions</button>
+                            <a href="/exams/<%= examId %>" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

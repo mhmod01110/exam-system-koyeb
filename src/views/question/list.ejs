@@ -1,0 +1,107 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Questions for <%= exam.title %></h2>
+                <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                    <div class="btn-group">
+                        <a href="/exams/<%= exam._id %>/questions/plan" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Multiple Questions
+                        </a>
+                        <a href="/exams/<%= exam._id %>/questions/create" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add Single Question
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (questions.length === 0) { %>
+                <div class="alert alert-info">
+                    No questions have been added to this exam yet.
+                </div>
+            <% } else { %>
+                <div class="list-group">
+                    <% questions.forEach((question, index) => { %>
+                        <div class="list-group-item" data-question-id="<%= question._id %>">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1">Question <%= index + 1 %></h5>
+                                <small>Type: <%= question.type %></small>
+                            </div>
+                            <p class="mb-1"><%= question.text %></p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>Created by: <%= question.createdBy.firstName %> <%= question.createdBy.lastName %></small>
+                                <div class="btn-group">
+                                    <a href="/exams/<%= exam._id %>/questions/<%= question._id %>" class="btn btn-sm btn-info">View</a>
+                                    <% if (user._id.toString() === question.createdBy._id.toString() || user.role === 'admin') { %>
+                                        <a href="/exams/<%= exam._id %>/questions/<%= question._id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+                                        <button onclick="deleteQuestion('<%= exam._id %>', '<%= question._id %>', '<%= csrfToken %>')" class="btn btn-sm btn-danger">Delete</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Add SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+async function deleteQuestion(examId, questionId, csrfToken) {
+    try {
+        // Show confirmation dialog
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This question will be permanently deleted!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
+            // Send delete request
+            const response = await fetch(`/exams/${examId}/questions/${questionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'CSRF-Token': csrfToken
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success message
+                await Swal.fire(
+                    'Deleted!',
+                    'Question has been deleted.',
+                    'success'
+                );
+                // Remove the question from the DOM
+                const questionElement = document.querySelector(`[data-question-id="${questionId}"]`);
+                if (questionElement) {
+                    questionElement.remove();
+                } else {
+                    // If we can't find the element, reload the page
+                    window.location.reload();
+                }
+            } else {
+                throw new Error(data.message || 'Failed to delete question');
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting question:', error);
+        Swal.fire(
+            'Error!',
+            error.message || 'Failed to delete question',
+            'error'
+        );
+    }
+}
+</script>
+
+

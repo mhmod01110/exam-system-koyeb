@@ -1,0 +1,604 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Results Survey</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Analysis Type Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-analysis="exam">
+                                    <i class="fas fa-file-alt"></i> By Exam
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-analysis="department">
+                                    <i class="fas fa-building"></i> By Department
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-analysis="student">
+                                    <i class="fas fa-user"></i> By Student
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Section -->
+                    <div class="row mb-4">
+                        <!-- Exam Filter -->
+                        <div class="col-md-4 filter-section" id="examFilter">
+                            <label class="form-label">Select Exam</label>
+                            <select class="form-select" id="examSelect">
+                                <option value="">Choose an exam...</option>
+                                <% exams.forEach(exam => { %>
+                                    <option value="<%= exam._id %>">
+                                        <%= exam.title %> (<%= exam.department?.name || 'No Department' %>)
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <!-- Department Filter -->
+                        <div class="col-md-4 filter-section" id="departmentFilter" style="display: none;">
+                            <label class="form-label">Select Department</label>
+                            <select class="form-select" id="departmentSelect">
+                                <option value="">Choose a department...</option>
+                                <% departments.forEach(dept => { %>
+                                    <option value="<%= dept._id %>"><%= dept.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <!-- Student Filter -->
+                        <div class="col-md-4 filter-section" id="studentFilter" style="display: none;">
+                            <label class="form-label">Select Student</label>
+                            <select class="form-select" id="studentSelect">
+                                <option value="">Choose a student...</option>
+                                <% students.forEach(student => { %>
+                                    <option value="<%= student._id %>">
+                                        <%= student.firstName %> <%= student.lastName %> 
+                                        (<%= student.departmentId?.name || 'No Department' %>)
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4" id="statsCards" style="display: none;">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title" id="stat1Title">Total Students</h5>
+                    <h2 class="mb-0" id="stat1Value">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title" id="stat2Title">Average Score</h5>
+                    <h2 class="mb-0" id="stat2Value">0%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title" id="stat3Title">Pass Rate</h5>
+                    <h2 class="mb-0" id="stat3Value">0%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title" id="stat4Title">Standard Deviation</h5>
+                    <h2 class="mb-0" id="stat4Value">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <!-- Main Chart -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" id="mainChartTitle">Performance Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Chart -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" id="distributionChartTitle">Score Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" id="tableTitle">Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="resultsTable">
+                            <thead>
+                                <tr id="tableHeaders">
+                                    <!-- Headers will be dynamically populated -->
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Data will be dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let mainChart = null;
+    let distributionChart = null;
+    let currentAnalysis = 'exam';
+
+    // Analysis type buttons
+    document.querySelectorAll('[data-analysis]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active button
+            document.querySelectorAll('[data-analysis]').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show/hide appropriate filters
+            currentAnalysis = this.dataset.analysis;
+            updateFilters(currentAnalysis);
+            
+            // Reset charts and stats
+            resetDisplay();
+        });
+    });
+
+    // Filter change handlers
+    ['exam', 'department', 'student'].forEach(type => {
+        const select = document.getElementById(`${type}Select`);
+        if (select) {
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    fetchData(type, this.value);
+                } else {
+                    resetDisplay();
+                }
+            });
+        }
+    });
+
+    function updateFilters(type) {
+        document.querySelectorAll('.filter-section').forEach(section => section.style.display = 'none');
+        document.getElementById(`${type}Filter`).style.display = 'block';
+        
+        // Reset selects
+        document.querySelectorAll('select').forEach(select => select.value = '');
+    }
+
+    function resetDisplay() {
+        // Reset stats
+        document.getElementById('statsCards').style.display = 'none';
+        ['1', '2', '3', '4'].forEach(num => {
+            document.getElementById(`stat${num}Value`).textContent = '0';
+        });
+
+        // Reset charts
+        if (mainChart) mainChart.destroy();
+        if (distributionChart) distributionChart.destroy();
+
+        // Reset table
+        document.getElementById('tableHeaders').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = '';
+    }
+
+    async function fetchData(type, id) {
+        try {
+            const response = await fetch(`/results-survey/${type}?${type}Id=${id}`);
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+            
+            updateDisplay(type, data);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            alert('Error fetching data. Please try again.');
+        }
+    }
+
+    function updateDisplay(type, data) {
+        document.getElementById('statsCards').style.display = 'flex';
+        
+        // Update stats based on type
+        if (type === 'exam') {
+            updateExamStats(data.stats);
+            createExamCharts(data);
+            createExamTable(data.results);
+        } else if (type === 'department') {
+            updateDepartmentStats(data.results);
+            createDepartmentCharts(data.results);
+            createDepartmentTable(data.results);
+        } else if (type === 'student') {
+            updateStudentStats(data.stats);
+            createStudentCharts(data);
+            createStudentTable(data.results);
+        }
+    }
+
+    // Type-specific update functions
+    function updateExamStats(stats) {
+        document.getElementById('stat1Title').textContent = 'Total Students';
+        document.getElementById('stat1Value').textContent = stats.totalStudents;
+        document.getElementById('stat2Title').textContent = 'Average Score';
+        document.getElementById('stat2Value').textContent = `${stats.averageScore.toFixed(1)}%`;
+        document.getElementById('stat3Title').textContent = 'Pass Rate';
+        document.getElementById('stat3Value').textContent = `${stats.passRate.toFixed(1)}%`;
+        document.getElementById('stat4Title').textContent = 'Standard Deviation';
+        document.getElementById('stat4Value').textContent = stats.standardDeviation.toFixed(1);
+    }
+
+    function updateDepartmentStats(results) {
+        const totalExams = results.length;
+        const totalStudents = results.reduce((sum, r) => sum + r.totalStudents, 0);
+        const weightedAverage = results.reduce((sum, r) => sum + (r.averageScore * r.totalStudents), 0) / totalStudents;
+        const overallPassRate = results.reduce((sum, r) => sum + (r.passRate * r.totalStudents), 0) / totalStudents;
+
+        document.getElementById('stat1Title').textContent = 'Total Exams';
+        document.getElementById('stat1Value').textContent = totalExams;
+        document.getElementById('stat2Title').textContent = 'Total Students';
+        document.getElementById('stat2Value').textContent = totalStudents;
+        document.getElementById('stat3Title').textContent = 'Average Score';
+        document.getElementById('stat3Value').textContent = `${weightedAverage.toFixed(1)}%`;
+        document.getElementById('stat4Title').textContent = 'Pass Rate';
+        document.getElementById('stat4Value').textContent = `${overallPassRate.toFixed(1)}%`;
+    }
+
+    function updateStudentStats(stats) {
+        document.getElementById('stat1Title').textContent = 'Total Exams';
+        document.getElementById('stat1Value').textContent = stats.totalExams;
+        document.getElementById('stat2Title').textContent = 'Average Score';
+        document.getElementById('stat2Value').textContent = `${stats.averageScore.toFixed(1)}%`;
+        document.getElementById('stat3Title').textContent = 'Pass Rate';
+        document.getElementById('stat3Value').textContent = `${stats.passRate.toFixed(1)}%`;
+        document.getElementById('stat4Title').textContent = 'Departments';
+        document.getElementById('stat4Value').textContent = Object.keys(stats.byDepartment).length;
+    }
+
+    function createExamCharts(data) {
+        // Main chart - Score distribution
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if (mainChart) mainChart.destroy();
+        
+        const scores = data.results.map(r => r.percentage);
+        const labels = Array.from({ length: 10 }, (_, i) => `${i * 10}-${(i + 1) * 10}%`);
+        const distribution = Array(10).fill(0);
+        
+        scores.forEach(score => {
+            const index = Math.min(Math.floor(score / 10), 9);
+            distribution[index]++;
+        });
+
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Students',
+                    data: distribution,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Distribution chart - Pass/Fail pie chart
+        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        if (distributionChart) distributionChart.destroy();
+
+        const passed = data.results.filter(r => r.status === 'PASS').length;
+        const failed = data.results.length - passed;
+
+        distributionChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['Pass', 'Fail'],
+                datasets: [{
+                    data: [passed, failed],
+                    backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 99, 132, 0.5)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            }
+        });
+    }
+
+    function createDepartmentCharts(results) {
+        // Main chart - Average scores by exam
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if (mainChart) mainChart.destroy();
+
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: results.map(r => r.examTitle),
+                datasets: [{
+                    label: 'Average Score',
+                    data: results.map(r => r.averageScore),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Average Score (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Exams'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Distribution chart - Students per exam
+        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        if (distributionChart) distributionChart.destroy();
+
+        distributionChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: results.map(r => r.examTitle),
+                datasets: [{
+                    data: results.map(r => r.totalStudents),
+                    backgroundColor: results.map((_, i) => `hsl(${(360 / results.length) * i}, 70%, 70%)`),
+                    borderColor: results.map((_, i) => `hsl(${(360 / results.length) * i}, 70%, 60%)`),
+                    borderWidth: 1
+                }]
+            }
+        });
+    }
+
+    function createStudentCharts(data) {
+        // Main chart - Performance over time
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if (mainChart) mainChart.destroy();
+
+        mainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.results.map(r => new Date(r.createdAt).toLocaleDateString()),
+                datasets: [{
+                    label: 'Score',
+                    data: data.results.map(r => r.percentage),
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Score (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Distribution chart - Performance by department
+        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        if (distributionChart) distributionChart.destroy();
+
+        const deptData = Object.entries(data.stats.byDepartment).map(([name, stats]) => ({
+            name,
+            average: stats.averageScore
+        }));
+
+        distributionChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: deptData.map(d => d.name),
+                datasets: [{
+                    label: 'Average Score by Department',
+                    data: deptData.map(d => d.average),
+                    backgroundColor: deptData.map((_, i) => `hsl(${(360 / deptData.length) * i}, 70%, 70%)`),
+                    borderColor: deptData.map((_, i) => `hsl(${(360 / deptData.length) * i}, 70%, 60%)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Average Score (%)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createExamTable(results) {
+        const headers = `
+            <th>Student</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Time Taken</th>
+        `;
+        document.getElementById('tableHeaders').innerHTML = headers;
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = results.map(result => `
+            <tr>
+                <td>${result.studentId.firstName} ${result.studentId.lastName}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger'}"
+                             role="progressbar"
+                             style="width: ${result.percentage}%"
+                             aria-valuenow="${result.percentage}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            ${result.percentage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${result.status === 'PASS' ? 'success' : 'danger'}">
+                        ${result.status}
+                    </span>
+                </td>
+                <td>${Math.floor(result.analytics?.timeSpent / 60) || 0} minutes</td>
+            </tr>
+        `).join('');
+    }
+
+    function createDepartmentTable(results) {
+        const headers = `
+            <th>Exam</th>
+            <th>Total Students</th>
+            <th>Average Score</th>
+            <th>Pass Rate</th>
+        `;
+        document.getElementById('tableHeaders').innerHTML = headers;
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = results.map(result => `
+            <tr>
+                <td>${result.examTitle}</td>
+                <td>${result.totalStudents}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${result.averageScore >= 80 ? 'success' : result.averageScore >= 60 ? 'info' : 'danger'}"
+                             role="progressbar"
+                             style="width: ${result.averageScore}%"
+                             aria-valuenow="${result.averageScore}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            ${result.averageScore.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${result.passRate >= 80 ? 'success' : result.passRate >= 60 ? 'info' : 'danger'}"
+                             role="progressbar"
+                             style="width: ${result.passRate}%"
+                             aria-valuenow="${result.passRate}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            ${result.passRate.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function createStudentTable(results) {
+        const headers = `
+            <th>Exam</th>
+            <th>Department</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Date</th>
+        `;
+        document.getElementById('tableHeaders').innerHTML = headers;
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = results.map(result => `
+            <tr>
+                <td>${result.examInfo.title}</td>
+                <td>${result.examInfo.department?.name || 'Uncategorized'}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger'}"
+                             role="progressbar"
+                             style="width: ${result.percentage}%"
+                             aria-valuenow="${result.percentage}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            ${result.percentage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${result.status === 'PASS' ? 'success' : 'danger'}">
+                        ${result.status}
+                    </span>
+                </td>
+                <td>${new Date(result.createdAt).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Initialize with exam analysis view
+    updateFilters('exam');
+});
+</script> 

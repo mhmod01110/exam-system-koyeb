@@ -1,0 +1,71 @@
+<%# This component handles exam deletion button %>
+<% if ((user.role === 'teacher' || user.role === 'admin') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
+    <form action="/exams/<%= exam._id %>" 
+          method="POST" 
+          class="d-inline delete-exam-form"
+          data-exam-id="<%= exam._id %>">
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete Exam
+        </button>
+    </form>
+<% } %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteExamForms = document.querySelectorAll('.delete-exam-form');
+    
+    deleteExamForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const examId = this.dataset.examId;
+            
+            if (!confirm('Are you sure you want to delete this exam? This will also delete all associated results, submissions, and attempts. This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/exams/${examId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'CSRF-Token': '<%= csrfToken %>',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    if (typeof showToast === 'function') {
+                        showToast('success', data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    
+                    // Redirect or remove element based on context
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        // If we're in a list view, remove the exam card/row
+                        const examElement = this.closest('.exam-item, .card, tr');
+                        if (examElement) {
+                            examElement.remove();
+                        }
+                    }
+                } else {
+                    throw new Error(data.error || 'Error deleting exam');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                if (typeof showToast === 'function') {
+                    showToast('error', error.message || 'Error deleting exam');
+                } else {
+                    alert(error.message || 'Error deleting exam');
+                }
+            }
+        });
+    });
+});</script> 
