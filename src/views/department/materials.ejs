@@ -24,24 +24,97 @@
                     <i class="fas fa-info-circle me-2"></i>
                     Based on your latest exam result, you are at <strong><%= studentLevel %></strong> level in this department.
                     <% if (studentLevel === 'Beginner') { %>
-                        Complete more exams with score above 50% to unlock Normal materials.
+                        You have access to all materials. Keep learning to maintain your progress!
                     <% } else if (studentLevel === 'Normal') { %>
-                        Complete more exams with score above 70% to unlock Advanced materials.
+                        You have access to Normal and Advanced materials. Keep up the good work!
                     <% } else { %>
-                        You have access to Advanced materials. Keep up the good work!
+                        You have access to Advanced materials only. Excellent progress!
                     <% } %>
                 </div>
 
-                <!-- Student Tabs - Only their level is active -->
+                <!-- Student Tabs -->
+                <style>
+                    /* Student tab styles */
+                    #materialTabs .nav-link {
+                        border-radius: 8px;
+                        padding: 10px 20px;
+                        transition: all 0.3s ease;
+                        margin: 0 5px;
+                        font-weight: 500;
+                    }
+
+                    /* Beginner tab */
+                    #beginner-tab {
+                        color: #198754;
+                        background-color: rgba(25, 135, 84, 0.1);
+                    }
+                    #beginner-tab.active {
+                        color: #fff !important;
+                        background-color: #198754 !important;
+                    }
+                    #beginner-tab .badge {
+                        background-color: #198754;
+                        color: #fff;
+                    }
+                    #beginner-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Normal tab */
+                    #normal-tab {
+                        color: #0d6efd;
+                        background-color: rgba(13, 110, 253, 0.1);
+                    }
+                    #normal-tab.active {
+                        color: #fff !important;
+                        background-color: #0d6efd !important;
+                    }
+                    #normal-tab .badge {
+                        background-color: #0d6efd;
+                        color: #fff;
+                    }
+                    #normal-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Advanced tab */
+                    #advanced-tab {
+                        color: #dc3545;
+                        background-color: rgba(220, 53, 69, 0.1);
+                    }
+                    #advanced-tab.active {
+                        color: #fff !important;
+                        background-color: #dc3545 !important;
+                    }
+                    #advanced-tab .badge {
+                        background-color: #dc3545;
+                        color: #fff;
+                    }
+                    #advanced-tab.active .badge {
+                        background-color: rgba(255, 255, 255, 0.3);
+                    }
+
+                    /* Hover effects */
+                    #beginner-tab:hover:not(.active) {
+                        background-color: rgba(25, 135, 84, 0.2);
+                    }
+                    #normal-tab:hover:not(.active) {
+                        background-color: rgba(13, 110, 253, 0.2);
+                    }
+                    #advanced-tab:hover:not(.active) {
+                        background-color: rgba(220, 53, 69, 0.2);
+                    }
+                </style>
                 <ul class="nav nav-pills nav-fill mb-4" id="materialTabs" role="tablist">
+                    <% if (studentLevel === 'Beginner') { %>
+                        <!-- Beginner sees all tabs -->
                     <li class="nav-item mx-1" role="presentation">
-                        <button class="nav-link <%= studentLevel === 'Beginner' ? 'active' : 'disabled' %>" 
+                            <button class="nav-link active" 
                                 id="beginner-tab" 
                                 data-bs-toggle="tab" 
                                 data-bs-target="#beginner" 
                                 type="button" 
-                                role="tab"
-                                <%= studentLevel !== 'Beginner' ? 'disabled' : '' %>>
+                                    role="tab">
                             <i class="fas fa-star-half-alt me-2"></i>
                             Beginner
                             <span class="badge ms-2">
@@ -50,13 +123,42 @@
                         </button>
                     </li>
                     <li class="nav-item mx-1" role="presentation">
-                        <button class="nav-link <%= studentLevel === 'Normal' ? 'active' : 'disabled' %>" 
+                            <button class="nav-link" 
+                                    id="normal-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#normal" 
+                                    type="button" 
+                                    role="tab">
+                                <i class="fas fa-star me-2"></i>
+                                Normal
+                                <span class="badge ms-2">
+                                    <%= department.materials.filter(m => m.level === 'Normal').length %>
+                                </span>
+                            </button>
+                        </li>
+                        <li class="nav-item mx-1" role="presentation">
+                            <button class="nav-link" 
+                                    id="advanced-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#advanced" 
+                                    type="button" 
+                                    role="tab">
+                                <i class="fas fa-star me-2"></i>
+                                Advanced
+                                <span class="badge ms-2">
+                                    <%= department.materials.filter(m => m.level === 'Advanced').length %>
+                                </span>
+                            </button>
+                        </li>
+                    <% } else if (studentLevel === 'Normal') { %>
+                        <!-- Normal sees Normal and Advanced tabs -->
+                        <li class="nav-item mx-1" role="presentation">
+                            <button class="nav-link active" 
                                 id="normal-tab" 
                                 data-bs-toggle="tab" 
                                 data-bs-target="#normal" 
                                 type="button" 
-                                role="tab"
-                                <%= studentLevel !== 'Normal' ? 'disabled' : '' %>>
+                                    role="tab">
                             <i class="fas fa-star me-2"></i>
                             Normal
                             <span class="badge ms-2">
@@ -65,13 +167,28 @@
                         </button>
                     </li>
                     <li class="nav-item mx-1" role="presentation">
-                        <button class="nav-link <%= studentLevel === 'Advanced' ? 'active' : 'disabled' %>" 
+                            <button class="nav-link" 
+                                    id="advanced-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#advanced" 
+                                    type="button" 
+                                    role="tab">
+                                <i class="fas fa-star me-2"></i>
+                                Advanced
+                                <span class="badge ms-2">
+                                    <%= department.materials.filter(m => m.level === 'Advanced').length %>
+                                </span>
+                            </button>
+                        </li>
+                    <% } else { %>
+                        <!-- Advanced sees only Advanced tab -->
+                        <li class="nav-item mx-1" role="presentation">
+                            <button class="nav-link active" 
                                 id="advanced-tab" 
                                 data-bs-toggle="tab" 
                                 data-bs-target="#advanced" 
                                 type="button" 
-                                role="tab"
-                                <%= studentLevel !== 'Advanced' ? 'disabled' : '' %>>
+                                    role="tab">
                             <i class="fas fa-star me-2"></i>
                             Advanced
                             <span class="badge ms-2">
@@ -79,51 +196,198 @@
                             </span>
                         </button>
                     </li>
+                    <% } %>
                 </ul>
 
-                <!-- Tab Content - Only show materials for student's level -->
+                <!-- Tab Content -->
                 <div class="tab-content" id="materialTabsContent">
-                    <% const levels = ['Beginner', 'Normal', 'Advanced']; %>
-                    <% levels.forEach(level => { %>
-                        <div class="tab-pane fade <%= level === studentLevel ? 'show active' : '' %>" 
-                             id="<%= level.toLowerCase() %>" 
-                             role="tabpanel">
+                    <% if (studentLevel === 'Beginner') { %>
+                        <!-- Beginner sees all content -->
+                        <div class="tab-pane fade show active" id="beginner" role="tabpanel">
+                            <div class="list-group">
+                                <% const beginnerMaterials = department.materials.filter(material => material.level === 'Beginner'); %>
+                                <% if (beginnerMaterials.length > 0) { %>
+                                    <% beginnerMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-success border-2 mb-2 rounded">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 text-success">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-success btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="alert alert-success bg-success bg-opacity-10 border-success">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No beginner materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="normal" role="tabpanel">
+                            <div class="list-group">
+                                <% const normalMaterials = department.materials.filter(material => material.level === 'Normal'); %>
+                                <% if (normalMaterials.length > 0) { %>
+                                    <% normalMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-primary border-2 mb-2 rounded">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 text-primary">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No normal materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="advanced" role="tabpanel">
+                            <div class="list-group">
+                                <% const advancedMaterials = department.materials.filter(material => material.level === 'Advanced'); %>
+                                <% if (advancedMaterials.length > 0) { %>
+                                    <% advancedMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-danger border-2 mb-2 rounded">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 text-danger">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-danger btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No advanced materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } else if (studentLevel === 'Normal') { %>
+                        <!-- Normal sees Normal and Advanced content -->
+                        <div class="tab-pane fade show active" id="normal" role="tabpanel">
+                            <div class="list-group">
+                                <% const normalMaterials = department.materials.filter(material => material.level === 'Normal'); %>
+                                <% if (normalMaterials.length > 0) { %>
+                                    <% normalMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-primary border-2 mb-2 rounded">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 text-primary">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No normal materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="advanced" role="tabpanel">
                 <div class="list-group">
-                                <% const levelMaterials = department.materials.filter(material => material.level === level); %>
-                                <% if (level === studentLevel && levelMaterials.length > 0) { %>
-                                    <% levelMaterials.forEach(material => { %>
-                                        <div class="list-group-item list-group-item-action border-2 mb-2 rounded
-                                            <%= level === 'Beginner' ? 'border-success' : 
-                                                level === 'Normal' ? 'border-primary' : 'border-danger' %>">
+                                <% const advancedMaterials = department.materials.filter(material => material.level === 'Advanced'); %>
+                                <% if (advancedMaterials.length > 0) { %>
+                                    <% advancedMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-danger border-2 mb-2 rounded">
                             <div class="d-flex w-100 justify-content-between align-items-center">
                                                 <div class="flex-grow-1">
-                                                    <h5 class="mb-2 <%= level === 'Beginner' ? 'text-success' : 
-                                                        level === 'Normal' ? 'text-primary' : 'text-danger' %>">
+                                                    <h5 class="mb-2 text-danger">
                                                         <i class="fas fa-book-reader me-2"></i>
                                                         <%= material.title %>
                                                     </h5>
                                     <% if (material.description) { %>
                                                         <p class="mb-2 text-muted"><%= material.description %></p>
                                     <% } %>
-                                                    <a href="<%= material.url %>" target="_blank" 
-                                                       class="btn btn-sm <%= level === 'Beginner' ? 'btn-success' : 
-                                                           level === 'Normal' ? 'btn-primary' : 'btn-danger' %>">
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-danger btn-sm">
                                                         <i class="fas fa-external-link-alt me-1"></i> Open Material
                                     </a>
                                 </div>
                                             </div>
                                         </div>
                                     <% }); %>
-                                <% } else if (level === studentLevel) { %>
-                                    <div class="alert <%= level === 'Beginner' ? 'alert-success' : 
-                                        level === 'Normal' ? 'alert-primary' : 'alert-danger' %> bg-opacity-10">
+                                <% } else { %>
+                                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        No <%= level.toLowerCase() %> materials available yet.
+                                        No advanced materials available yet.
                                     </div>
                                 <% } %>
                             </div>
                         </div>
+                    <% } else { %>
+                        <!-- Advanced sees only Advanced content -->
+                        <div class="tab-pane fade show active" id="advanced" role="tabpanel">
+                            <div class="list-group">
+                                <% const advancedMaterials = department.materials.filter(material => material.level === 'Advanced'); %>
+                                <% if (advancedMaterials.length > 0) { %>
+                                    <% advancedMaterials.forEach(material => { %>
+                                        <div class="list-group-item list-group-item-action border-danger border-2 mb-2 rounded">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2 text-danger">
+                                                        <i class="fas fa-book-reader me-2"></i>
+                                                        <%= material.title %>
+                                                    </h5>
+                                                    <% if (material.description) { %>
+                                                        <p class="mb-2 text-muted"><%= material.description %></p>
+                                                    <% } %>
+                                                    <a href="<%= material.url %>" target="_blank" class="btn btn-danger btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i> Open Material
+                                                    </a>
+                                                </div>
+                            </div>
+                        </div>
                     <% }); %>
+                                <% } else { %>
+                                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No advanced materials available yet.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } %>
                 </div>
             <% } else { %>
                 <!-- Teacher/Admin View - Show all tabs -->
