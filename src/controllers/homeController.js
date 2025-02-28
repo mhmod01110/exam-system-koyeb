@@ -67,9 +67,9 @@ exports.getHome = async (req, res) => {
                 let studentLevel = 'Beginner';
                 if (latestResult) {
                     const percentage = latestResult.percentage;
-                    if (percentage > 70) {
+                    if (percentage > 84) {
                         studentLevel = 'Advanced';
-                    } else if (percentage > 50) {
+                    } else if (percentage > 59) {
                         studentLevel = 'Normal';
                     }
                 }
