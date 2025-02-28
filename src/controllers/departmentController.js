@@ -215,9 +215,9 @@ exports.getDepartmentMaterials = async (req, res) => {
                 const percentage = latestResult.percentage;
                 
                 // Determine student level based on percentage
-                if (percentage <= 50) {
+                if (percentage <= 59) {
                     studentLevel = 'Beginner';
-                } else if (percentage <= 70) {
+                } else if (percentage <= 84) {
                     studentLevel = 'Normal';
                 } else {
                     studentLevel = 'Advanced';
